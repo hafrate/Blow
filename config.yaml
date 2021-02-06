@@ -1,7 +1,7 @@
-baseURL: '/'
+baseURL: 'https://hafratium.netlify.app/'
 languageCode: en-us
 defaultContentLanguage: en-us
-title: Finance - Blog
+title: Finance - Data Science Blog
 theme: hugo-tranquilpeak-theme
 disqusShortname: hugo-tranquilpeak-theme
 paginate: 7
@@ -15,7 +15,7 @@ taxonomies:
   category: categories
   tag: tags
 author:
-  bio: Super bio with markdown support **COOL**
+  bio: Super Fun support **COOL**
   gravatarEmail: hafrate@gmail.com
   job: Your job title
   location: France

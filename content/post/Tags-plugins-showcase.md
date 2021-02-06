@@ -39,7 +39,7 @@ Read documentation to know how to use [Block Quote tag](https://hexo.io/docs/tag
 
 **Normal blockquote**
 
-> Praesent diam elit, interdum ut pulvinar placerat, imperdiet at magna.
+> Praesent diam elit, interdum ut pulvinar placerat, impe magna.
 
 **Quote from a book**
 
