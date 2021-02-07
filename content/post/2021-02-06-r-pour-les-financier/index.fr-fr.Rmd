@@ -1,0 +1,13 @@
+---
+title: R pour les financier
+author: hafrate
+date: '2021-02-06'
+slug: index.fr-fr
+categories:
+  - R
+tags: []
+keywords:
+  - tech
+---
+
+<!--more-->

@@ -5,9 +5,9 @@ title: Finance - Data Science Blog
 theme: hugo-tranquilpeak-theme
 disqusShortname: hugo-tranquilpeak-theme
 paginate: 7
-#ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
+ignoreFiles : ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 canonifyurls: yes
-#ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
+
 permalinks:
   post: /:year/:month/:slug/
 taxonomies:
@@ -16,11 +16,11 @@ taxonomies:
   tag: tags
 author:
   bio: Super Fun support **COOL**
-  gravatarEmail: hafrate@gmail.com
-  job: Your job title
-  location: France
-  name: Mohammed Hafrate
-  picture: https://cdn1.iconfinder.com/data/icons/ninja-things-1/1772/ninja-simple-512.png
+  #gravatarEmail: hafrate@gmail.com
+  job: Finance, 
+  location: Maroc Hafrate
+  name: Mohammed **COOL**
+  picture: "img/profil.jpg" 
 menu:
   links:
     - identifier: github
