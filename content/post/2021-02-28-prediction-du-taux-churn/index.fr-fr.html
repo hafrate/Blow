@@ -1,0 +1,665 @@
+---
+title: Prediction du Taux Churn
+author: Mohammed Hafrate
+date: '2021-02-28'
+slug: index.fr-fr
+categories: []
+tags: ["R", "Taux de Churn", "Machine Learnig", "caret"]
+keywords:
+  - tech
+thumbnailImage: "/img/ThumImage.PNG"
+thumbnailImagePosition: left
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div id="prévision-du-taux-de-churn-comparaison-de-plusieurs-machine-learning" class="section level2">
+<h2>Prévision du taux de Churn – Comparaison de plusieurs Machine Learning</h2>
+<p>Le taux de churn désigne la proportion des clients que perd une entreprise sur une période donnée. C’est un indicateur marketing clé pour mesurer la fidélité de sa clientèle et un signe d’intérêt que portent les clients aux produits ou service de la marque. Le taux de churn est un indicateur de performance critique pour les entreprises avec un business model basé sur l’abonnement comme le Telecom, Streaming Vidéos music (Netflix, Spotify,..), SaaS,…
+Il est important pour les entreprises de se concentrer sur la notion de churn car ce taux permet d’analyser la satisfaction de la clientèle et par extension leur rentabilité. Sans oublier le cout d’acquittions d’un nouveau client requiert des budgets importants.</p>
+<blockquote>
+<p>Des études réalisées estiment les dépenses consacrées à l’acquisition client comme étant 5 fois supérieures à celles consacréesà la rétention.</p>
+</blockquote>
+</div>
+<div id="pourquoi-prévoir-le-taux-de-churn" class="section level2">
+<h2>Pourquoi prévoir le Taux de Churn ?</h2>
+<p>Détecter les clients avec un risque potentiel de churn à l’avance permet de cibler ces personnes afin de l’empêcher de mettre fin à son abonnement. Aussi, avoir la capacité de prédire avec précision le taux de churn est nécessaire car cela permet à l’entreprise de mieux comprendre les revenus futurs attendus. La prévision de taux churn peut également aider à prendre des décisions proactives et améliorer les domaines dans lesquels le service client fait défaut.
+Prévoir le taux churn par des machine Learning
+Dans cet article, nous allons créer des modèles de prévision de taux churn basé sur une base de données de Telecom.</p>
+<p>Les données ont été fourni par <em>IBM Developer Platform</em> et disponible <a href="https://raw.githubusercontent.com/hafrate/ChurnRate-Data/main/WA_Fn-UseC_-Telco-Customer-Churn.csv">ici</a>. Certaines informations, telles le nom, les données du client ont été gardés anaonyme par souci de confidentialité mais sans impact sur nos models.
+L’objectif est déterminer si le client a churné (Yes/No) c’est problem de classement en utilisant plusieurs Machine Learnig pour pouvoir comparer leur performance de prévision.
+J’utilise la library caret combiné avec le fabuleux library purrr
+le processus classique d’un Data Science:</p>
+<ol style="list-style-type: decimal">
+<li>Imporation des données</li>
+<li>Exploration des données</li>
+<li>Split des données</li>
+<li>Preprocessing</li>
+<li>Modélisation</li>
+<li>Evaluation</li>
+</ol>
+<p>L’objectif est d’identifier les client perdus (Churn = yes) à partir de leurs caractéristique (gender, SeniorCitizen, Partner, Dependens, tenure,… ). C’est un exercice de classement</p>
+<div id="imporation-des-données" class="section level3">
+<h3>Imporation des données</h3>
+<pre class="r"><code>library(readr)
+library(dplyr)
+library(purrr)
+library(tibble)
+Customer_Churn &lt;- read_csv(&quot;D:/Data/ChurnPrediction/WA_Fn-UseC_-Telco-Customer-Churn.csv&quot;)
+Customer_Churn%&gt;%glimpse()</code></pre>
+<pre><code>## Rows: 7,043
+## Columns: 21
+## $ customerID       &lt;chr&gt; &quot;7590-VHVEG&quot;, &quot;5575-GNVDE&quot;, &quot;3668-QPYBK&quot;, &quot;7795-CF...
+## $ gender           &lt;chr&gt; &quot;Female&quot;, &quot;Male&quot;, &quot;Male&quot;, &quot;Male&quot;, &quot;Female&quot;, &quot;Femal...
+## $ SeniorCitizen    &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,...
+## $ Partner          &lt;chr&gt; &quot;Yes&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;...
+## $ Dependents       &lt;chr&gt; &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;Yes&quot;, &quot;No&quot;, &quot;...
+## $ tenure           &lt;dbl&gt; 1, 34, 2, 45, 2, 8, 22, 10, 28, 62, 13, 16, 58, 49...
+## $ PhoneService     &lt;chr&gt; &quot;No&quot;, &quot;Yes&quot;, &quot;Yes&quot;, &quot;No&quot;, &quot;Yes&quot;, &quot;Yes&quot;, &quot;Yes&quot;, &quot;No...
+## $ MultipleLines    &lt;chr&gt; &quot;No phone service&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No phone service&quot;...
+## $ InternetService  &lt;chr&gt; &quot;DSL&quot;, &quot;DSL&quot;, &quot;DSL&quot;, &quot;DSL&quot;, &quot;Fiber optic&quot;, &quot;Fiber ...
+## $ OnlineSecurity   &lt;chr&gt; &quot;No&quot;, &quot;Yes&quot;, &quot;Yes&quot;, &quot;Yes&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;Yes&quot;...
+## $ OnlineBackup     &lt;chr&gt; &quot;Yes&quot;, &quot;No&quot;, &quot;Yes&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;Yes&quot;, &quot;No&quot;,...
+## $ DeviceProtection &lt;chr&gt; &quot;No&quot;, &quot;Yes&quot;, &quot;No&quot;, &quot;Yes&quot;, &quot;No&quot;, &quot;Yes&quot;, &quot;No&quot;, &quot;No&quot;,...
+## $ TechSupport      &lt;chr&gt; &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;Yes&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;...
+## $ StreamingTV      &lt;chr&gt; &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;Yes&quot;, &quot;Yes&quot;, &quot;No&quot;, ...
+## $ StreamingMovies  &lt;chr&gt; &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;No&quot;, &quot;Yes&quot;, &quot;No&quot;, &quot;No&quot;, &quot;...
+## $ Contract         &lt;chr&gt; &quot;Month-to-month&quot;, &quot;One year&quot;, &quot;Month-to-month&quot;, &quot;O...
+## $ PaperlessBilling &lt;chr&gt; &quot;Yes&quot;, &quot;No&quot;, &quot;Yes&quot;, &quot;No&quot;, &quot;Yes&quot;, &quot;Yes&quot;, &quot;Yes&quot;, &quot;No...
+## $ PaymentMethod    &lt;chr&gt; &quot;Electronic check&quot;, &quot;Mailed check&quot;, &quot;Mailed check&quot;...
+## $ MonthlyCharges   &lt;dbl&gt; 29.85, 56.95, 53.85, 42.30, 70.70, 99.65, 89.10, 2...
+## $ TotalCharges     &lt;dbl&gt; 29.85, 1889.50, 108.15, 1840.75, 151.65, 820.50, 1...
+## $ Churn            &lt;chr&gt; &quot;No&quot;, &quot;No&quot;, &quot;Yes&quot;, &quot;No&quot;, &quot;Yes&quot;, &quot;Yes&quot;, &quot;No&quot;, &quot;No&quot;,...</code></pre>
+<p>Nous disposons de 7043 observations et 20 variables, dont la cible <strong>Churn</strong></p>
+</div>
+<div id="exploration-des-données" class="section level3">
+<h3>Exploration des données</h3>
+<p>Exploration est la première étape. Le Package <strong>summarytools</strong> permet de faire une analyse descriptive des variables numériques et catégorielles.
+La fonction <em>dfSummary</em> est utilisé pour résumer les données, des statistique descriptives, ainsi des graphes pour montrer la distribution</p>
+<pre class="r"><code>library(summarytools)
+print(dfSummary(Customer_Churn%&gt;%select(-customerID), graph.magnif = .7), method= &quot;render&quot;)</code></pre>
+<div class="container st-container">
+<h3>Data Frame Summary</h3>
+<h4>Customer_Churn</h4>
+<strong>Dimensions</strong>: 7043 x 20
+  <br/><strong>Duplicates</strong>: 22
+<br/>
+<table class="table table-striped table-bordered st-table st-table-striped st-table-bordered st-multiline ">
+  <thead>
+    <tr>
+      <th align="center" class="st-protect-top-border"><strong>No</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Variable</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Stats / Values</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Freqs (% of Valid)</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Graph</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Valid</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Missing</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center">1</td>
+      <td align="left">gender
+[character]</td>
+      <td align="left">1. Female
+2. Male</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3488</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">49.5%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3555</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">50.5%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAEEAAAAnBAMAAACidDgxAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAAC1JREFUOMtjYBg8QAknUICqUDbGBUZVDKQKwjEniBMIUFHFaAoaqioIx9xgAADsv5F/r4ohUwAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMS0wMi0yOFQxMjo1NTo1NyswMDowMC9FCJoAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDBeGLAmAAAAAElFTkSuQmCC"></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">2</td>
+      <td align="left">SeniorCitizen
+[numeric]</td>
+      <td align="left">Min : 0
+Mean : 0.2
+Max : 1</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">0</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">5901</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">83.8%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">1</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">1142</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">16.2%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAGQAAAAnBAMAAAALAPClAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAADhJREFUOMtjYBheQIkEANWibEw0MBrVMqqFHC1kJEtBEgBdtcAdSrwWWIgZjWoZ1UIjLWQky+ECAKawtH/2odt1AAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIxLTAyLTI4VDEyOjU1OjU3KzAwOjAwL0UImgAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMS0wMi0yOFQxMjo1NTo1NyswMDowMF4YsCYAAAAASUVORK5CYII="></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">3</td>
+      <td align="left">Partner
+[character]</td>
+      <td align="left">1. No
+2. Yes</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3641</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">51.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3402</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">48.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAEMAAAAnBAMAAACmgegMAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAADVJREFUOMtjYBhcQAk3UIAqUTbGCUaVDBIlRESjIG4gQFUlOF2iCFeC00ejSgaNEiKicbAAAK7fk45eSW+3AAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIxLTAyLTI4VDEyOjU1OjU3KzAwOjAwL0UImgAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMS0wMi0yOFQxMjo1NTo1NyswMDowMF4YsCYAAAAASUVORK5CYII="></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">4</td>
+      <td align="left">Dependents
+[character]</td>
+      <td align="left">1. No
+2. Yes</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">4933</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">70.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2110</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">30.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAFYAAAAnBAMAAABnBqKgAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAADVJREFUOMtjYBh6QIkYAFWrbEwYGI2qHTFqSUk7gsQAGqtFdxo+tWjhYDSqdmSrJSXtDCUAAM0EphY9UN6RAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIxLTAyLTI4VDEyOjU1OjU3KzAwOjAwL0UImgAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMS0wMi0yOFQxMjo1NTo1NyswMDowMF4YsCYAAAAASUVORK5CYII="></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">5</td>
+      <td align="left">tenure
+[numeric]</td>
+      <td align="left">Mean (sd) : 32.4 (24.6)
+min < med < max:
+0 < 29 < 72
+IQR (CV) : 46 (0.8)</td>
+      <td align="left" style="vertical-align:middle">73 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAAIdJREFUWMPt1s0NgCAMBWBGUCaQuoHdfzcrVA2YQKoeDL4XLgS+8FMOONd/iCiMhgzqZmY4ODg4ODg4uKdOviJ0x0lb+nJyEZPVeUEys3DtK/UcZxauveRnHMUEs4uN33VbEeou7fYsivbTYMVl7yCVOhtsOn0fRnecx+iuHTi4HzgyZnc9ZwVjTnbyZr5juQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMS0wMi0yOFQxMjo1NTo1NyswMDowMC9FCJoAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDBeGLAmAAAAAElFTkSuQmCC"></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">6</td>
+      <td align="left">PhoneService
+[character]</td>
+      <td align="left">1. No
+2. Yes</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">682</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">9.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">6361</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">90.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAGsAAAAnBAMAAAD6C6soAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAADxJREFUSMdjYBjeQAkEFAWJBQJQbcrGQDCqbVTbINJGZlImWsNAalMiDSgghyTxYFTbqDaaayMzKQ9XAAAkY7y6Ix3B5gAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMS0wMi0yOFQxMjo1NTo1NyswMDowMC9FCJoAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDBeGLAmAAAAAElFTkSuQmCC"></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">7</td>
+      <td align="left">MultipleLines
+[character]</td>
+      <td align="left">1. No
+2. No phone service
+3. Yes</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3390</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">48.1%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">682</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">9.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2971</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">42.2%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAD8AAAA5BAMAAABzKO7xAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAAEhJREFUOMtjYBgcQAkXUIAqUDbGAUYVDD4FBGNTEBcQIFYB2DhFPArAjhxVMDQUEIxNQVyAtASDARTRHIkBRhUMSgUEY3OgAQC8f7V6FQe2CwAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMS0wMi0yOFQxMjo1NTo1NyswMDowMC9FCJoAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDBeGLAmAAAAAElFTkSuQmCC"></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">8</td>
+      <td align="left">InternetService
+[character]</td>
+      <td align="left">1. DSL
+2. Fiber optic
+3. No</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2421</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">34.4%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3096</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">44.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1526</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">21.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAADsAAAA5BAMAAAB6w06LAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAAEVJREFUOMtjYBhYoIQBFAWBQAAqrWyMDkalB1iaQIwJYgdESithBwo4nQYGo9IDJ00gxqiWHBSxSCM5bVR6cEgTiLGBAgChDK742yc5nQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMS0wMi0yOFQxMjo1NTo1NyswMDowMC9FCJoAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDBeGLAmAAAAAElFTkSuQmCC"></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">9</td>
+      <td align="left">OnlineSecurity
+[character]</td>
+      <td align="left">1. No
+2. No internet service
+3. Yes</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3498</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">49.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1526</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">21.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2019</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">28.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAEEAAAA5BAMAAACbqFvaAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAAEZJREFUOMtjYBg8QAknUICqUDbGBUZVDG4VhONWECcQIFoFkrGK2FUguXRUxZBSQThuqZyC0GzC4lI0146qGNwqCMftYAAA0vu4u0U3M+0AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDAvRQiaAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIxLTAyLTI4VDEyOjU1OjU3KzAwOjAwXhiwJgAAAABJRU5ErkJggg=="></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">10</td>
+      <td align="left">OnlineBackup
+[character]</td>
+      <td align="left">1. No
+2. No internet service
+3. Yes</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3088</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">43.8%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1526</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">21.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2429</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">34.5%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAADsAAAA5BAMAAAB6w06LAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAAEVJREFUOMtjYBhYoIQdKECllY2xglHpgZMmEGOC2IEAcdJIBipikUZy2qj04JAmEGNUSw7IdmBxGrILR6UHTppAjA0UAAD4zK74yz5DOQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMS0wMi0yOFQxMjo1NTo1NyswMDowMC9FCJoAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDBeGLAmAAAAAElFTkSuQmCC"></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">11</td>
+      <td align="left">DeviceProtection
+[character]</td>
+      <td align="left">1. No
+2. No internet service
+3. Yes</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3095</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">43.9%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1526</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">21.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2422</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">34.4%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAADsAAAA5BAMAAAB6w06LAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAAEVJREFUOMtjYBhYoIQdKECllY2xglHpgZMmEGOC2IEAcdJIBipikUZy2qj04JAmEGNUSw7IdmBxGrILR6UHTppAjA0UAAD4zK74yz5DOQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMS0wMi0yOFQxMjo1NTo1NyswMDowMC9FCJoAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDBeGLAmAAAAAElFTkSuQmCC"></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">12</td>
+      <td align="left">TechSupport
+[character]</td>
+      <td align="left">1. No
+2. No internet service
+3. Yes</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3473</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">49.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1526</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">21.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2044</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">29.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAEAAAAA5BAMAAAB0ajDkAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAAENJREFUOMtjYBgcQAkngCpQNsYBjEYVDDoFBGNTECcgVgGSmYpYFSA5clTBYFdAMDapmmDQrMGeqkcVDGYFBGNzoAEAsia0riU0okcAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDAvRQiaAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIxLTAyLTI4VDEyOjU1OjU3KzAwOjAwXhiwJgAAAABJRU5ErkJggg=="></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">13</td>
+      <td align="left">StreamingTV
+[character]</td>
+      <td align="left">1. No
+2. No internet service
+3. Yes</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2810</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">39.9%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1526</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">21.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2707</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">38.4%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAADYAAAA5BAMAAACPPcU7AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAAEBJREFUOMtjYKA/UMIGoHLKxpjAaFSOJnL44kEQGyBCDskkRXQ5JLeMytFYDl88UCFuEYbjSWejcrSRwxcP9AQAldykaTiw7t0AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDAvRQiaAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIxLTAyLTI4VDEyOjU1OjU3KzAwOjAwXhiwJgAAAABJRU5ErkJggg=="></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">14</td>
+      <td align="left">StreamingMovies
+[character]</td>
+      <td align="left">1. No
+2. No internet service
+3. Yes</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2785</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">39.5%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1526</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">21.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2732</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">38.8%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAADYAAAA5BAMAAACPPcU7AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAAEBJREFUOMtjYKA/UMIGoHLKxpjAaFSOJnL44kEQGyBCDskkRXQ5JLeMytFYDl88UCFuEYbjSWejcrSRwxcP9AQAldykaTiw7t0AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDAvRQiaAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIxLTAyLTI4VDEyOjU1OjU3KzAwOjAwXhiwJgAAAABJRU5ErkJggg=="></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">15</td>
+      <td align="left">Contract
+[character]</td>
+      <td align="left">1. Month-to-month
+2. One year
+3. Two year</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3875</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">55.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1473</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">20.9%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1695</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">24.1%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAEYAAAA5BAMAAAB5dECjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAAEhJREFUSMdjYBh8QAkfgKpRNsYNjEbVDEk1xMS7ID5AghokkxVxqUFy86iaYaKGmHgXxAfIS2NKSoTdbGw0qmZYqCEm3gcTAABti79Q8n55UwAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMS0wMi0yOFQxMjo1NTo1NyswMDowMC9FCJoAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDBeGLAmAAAAAElFTkSuQmCC"></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">16</td>
+      <td align="left">PaperlessBilling
+[character]</td>
+      <td align="left">1. No
+2. Yes</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2872</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">40.8%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">4171</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">59.2%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAEsAAAAnBAMAAAC1Vqj4AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAADdJREFUOMtjYBjcQAkbUBSEAQGoMmVjLGBU2ZBWRmTUC+IHtFGmhB8o4PMpAowqG4LKiIz6wQoASUWbylifYcYAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDAvRQiaAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIxLTAyLTI4VDEyOjU1OjU3KzAwOjAwXhiwJgAAAABJRU5ErkJggg=="></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">17</td>
+      <td align="left">PaymentMethod
+[character]</td>
+      <td align="left">1. Bank transfer (automatic)
+2. Credit card (automatic)
+3. Electronic check
+4. Mailed check</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1544</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">21.9%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1522</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">21.6%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2365</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">33.6%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1612</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">22.9%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAADAAAABJBAMAAACJAbi9AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAAFJJREFUOMtjYKAPUEICgmAAlVA2hgOjUQkyJXCGriAGICSBZJIiLstHJQhI4AxE0uODmIiCAkxXQdPKqAQuCZyBSFl8KOJIJcajEmRK4AxdWgMAmKaq/Bb50FMAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDAvRQiaAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIxLTAyLTI4VDEyOjU1OjU3KzAwOjAwXhiwJgAAAABJRU5ErkJggg=="></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">18</td>
+      <td align="left">MonthlyCharges
+[numeric]</td>
+      <td align="left">Mean (sd) : 64.8 (30.1)
+min < med < max:
+18.2 < 70.3 < 118.8
+IQR (CV) : 54.3 (0.5)</td>
+      <td align="left" style="vertical-align:middle">1585 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc5LEpKjgAAAIlJREFUWMPt1G0KgCAMBmCPkJ2g9Abt/nfLCQtt/XD7U9j7giC6RxA/Qpg/sSRx4liWxmUiOn7nkmS3uTpaGsE9u+4aGlw3DQc34uQBW51ccHG8jsfl+wa8bpWdWJ1UwGl3narR5bYcrv7oDteVwsHBfcnxq94cjjvKqa920KkKOLj3XTJG3Mw5Aasv+upVCaWlAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIxLTAyLTI4VDEyOjU1OjU3KzAwOjAwL0UImgAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMS0wMi0yOFQxMjo1NTo1NyswMDowMF4YsCYAAAAASUVORK5CYII="></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">19</td>
+      <td align="left">TotalCharges
+[numeric]</td>
+      <td align="left">Mean (sd) : 2283.3 (2266.8)
+min < med < max:
+18.8 < 1397.5 < 8684.8
+IQR (CV) : 3393.3 (1)</td>
+      <td align="left" style="vertical-align:middle">6530 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc6tUMbNAAAAI5JREFUWMPt1s0NgCAMBWBGECeQxway/24aIlEEtdSLP68XTl9KCyUY8/0AYFuiW5wPIx0dHR0dHR3dXQc4lQvhLQ7yEjPn5Snpnumk/+y9k87TD52opRUXJCnrDrhKWndpv8f+xKXV2r58PwRuTlneP4HbeJXL+tzmYp9cu1tHVOFinQoXjyY5NMZgvh8Tplo3XcAqUiQAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjEtMDItMjhUMTI6NTU6NTcrMDA6MDAvRQiaAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIxLTAyLTI4VDEyOjU1OjU3KzAwOjAwXhiwJgAAAABJRU5ErkJggg=="></td>
+      <td align="center">7032
+(99.8%)</td>
+      <td align="center">11
+(0.2%)</td>
+    </tr>
+    <tr>
+      <td align="center">20</td>
+      <td align="left">Churn
+[character]</td>
+      <td align="left">1. No
+2. Yes</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">5174</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">73.5%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1869</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">26.5%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAFoAAAAnBAMAAAB9OkIuAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5QIcDDc6tUMbNAAAADdJREFUOMtjYBi6QIk4AFWtbEwMMBpVPcJVk5aqBIkDdFCN6jxCqlHCxGhU9ahq7KpJS1VDEQAAifaqNLmaoe8AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjEtMDItMjhUMTI6NTU6NTgrMDA6MDDZDXhzAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIxLTAyLTI4VDEyOjU1OjU4KzAwOjAwqFDAzwAAAABJRU5ErkJggg=="></td>
+      <td align="center">7043
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+  </tbody>
+</table>
+<p>Generated by <a href='https://github.com/dcomtois/summarytools'>summarytools</a> 0.9.8 (<a href='https://www.r-project.org/'>R</a> version 4.0.3)<br/>2021-02-28</p>
+</div>
+<p>Comme on peut le voir ci-dessous, le type de variable est affiché avec le nom. Viennent ensuite des statistiques descriptives pour les variables numériques et les valeurs des variables catégorielle. Un simple histogramme ou graphe avec des barres est affiché. Aussi, s’il y a des valeurs manquantes ou erreurs. Le Report fournit un résumé concis de l’ensemble des variables dans les données</p>
+<p>On peut supprimer certains lignes (TotalCharges) avec des erreurs (11 lignes), sans impact sur les données.</p>
+<pre class="r"><code>Customer_Churn&lt;- Customer_Churn%&gt;%tidyr::drop_na()</code></pre>
+<p>A l’aide de <strong>ggplot</strong>, on peut aussi visualiser les variables numériques et catégorielles séparément avec le variable Churn</p>
+<pre class="r"><code>library(tidyverse)
+library(ggthemes)
+theme_set(theme_minimal())</code></pre>
+<div id="graphe-pour-les-variables-catégorielle" class="section level4">
+<h4>Graphe pour les variables catégorielle</h4>
+<pre class="r"><code>Customer_Churn%&gt;%
+  mutate(SeniorCitizen = as.character(SeniorCitizen))%&gt;%
+  select(- customerID)%&gt;%
+  select_if(is.character)%&gt;%
+  select(Churn, everything())%&gt;%
+  gather(x, y, gender:PaymentMethod)%&gt;%
+  count(Churn, x, y)%&gt;%
+  ggplot(aes(x=y, y=n, fill = Churn, color=Churn))+
+  facet_wrap(~ x, ncol= 3, scales= &quot;free&quot;)+
+  geom_bar(stat = &quot;identity&quot;, alpha = 0.5)</code></pre>
+<p><img src="/post/2021-02-28-prediction-du-taux-churn/index.fr-fr_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+</div>
+<div id="graphe-pour-les-variables-numériques" class="section level4">
+<h4>Graphe pour les variables numériques</h4>
+<pre class="r"><code>Customer_Churn%&gt;%
+  select(- customerID)%&gt;%
+  select(Churn, MonthlyCharges, tenure, TotalCharges) %&gt;%
+  gather(x, y, MonthlyCharges:TotalCharges)%&gt;%
+  count(Churn, x, y)%&gt;%
+  ggplot(aes(x=y, fill = Churn, color=Churn))+
+  facet_wrap(~ x, ncol= 3, scales= &quot;free&quot;)+
+  geom_density( alpha = 0.5)+
+  scale_color_tableau()+
+  scale_fill_tableau()</code></pre>
+<p><img src="/post/2021-02-28-prediction-du-taux-churn/index.fr-fr_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+</div>
+</div>
+<div id="split-des-données" class="section level3">
+<h3>Split des données</h3>
+<p>On scinde les données en deux, <em>train</em> pour la modélisation 80% et <em>test</em> 20% pour l’évaluation de nos modèles afin d’éviter le sur-apprentissage</p>
+<pre class="r"><code>library(rsample)
+set.seed(123)
+index_split&lt;- initial_split(Customer_Churn, prop = 0.8)
+train_data&lt;- training(index_split)
+test_data&lt;- testing(index_split)
+index_split</code></pre>
+<pre><code>## &lt;Analysis/Assess/Total&gt;
+## &lt;5626/1406/7032&gt;</code></pre>
+<pre class="r"><code>print(train_data%&gt;%nrow())</code></pre>
+<pre><code>## [1] 5626</code></pre>
+<pre class="r"><code>print(test_data%&gt;%nrow)</code></pre>
+<pre><code>## [1] 1406</code></pre>
+</div>
+<div id="preprocessing" class="section level3">
+<h3>Preprocessing</h3>
+<p>Les différences échelles ou de distribution entre les variables peuvent diverger des hypothéses sous-jacent dans les modèles. Il est donc nécessaire d’appliquer des tâches <em>step</em> de modification de la distribution ou rendre les valeurs texte en numérique (dummy Variables).
+Le package <strong>recipes</strong> permet la manipulation facile de la phase de prétraitement. L’objet crée <strong>rec_obj</strong> permet de stocker tous les étapes de preprocessing</p>
+<pre class="r"><code>library(recipes)
+rec_obj&lt;- recipe(Churn ~ ., Customer_Churn) %&gt;%
+    step_rm(customerID) %&gt;%                                # supprimer le variable customerID
+    step_naomit(all_outcomes(), all_predictors()) %&gt;%      # supprimer les lignes avec erreur
+    step_discretize(tenure, options = list(cuts = 6)) %&gt;%  # convertir valeur numérique en catégorie par tranche
+    step_log(TotalCharges) %&gt;%                             # appliquer log pour Totalcharges - bcq outliers
+    step_dummy(all_nominal(), -all_outcomes()) %&gt;%         # convertir les valeur text en numérique--Encodage des valeurs catégorielle
+    step_center(all_predictors(), -all_outcomes()) %&gt;%     # Standarisation (centré)
+    step_scale(all_predictors(), -all_outcomes()) %&gt;%      # standarisation 
+    prep()
+rec_obj</code></pre>
+<pre><code>## Data Recipe
+## 
+## Inputs:
+## 
+##       role #variables
+##    outcome          1
+##  predictor         20
+## 
+## Training data contained 7032 data points and no missing data.
+## 
+## Operations:
+## 
+## Variables removed customerID [trained]
+## Removing rows with NA values in all_outcomes(), all_predictors()
+## Dummy variables from tenure [trained]
+## Log transformation on TotalCharges [trained]
+## Dummy variables from gender, Partner, Dependents, tenure, ... [trained]
+## Centering for SeniorCitizen, MonthlyCharges, ... [trained]
+## Scaling for SeniorCitizen, MonthlyCharges, ... [trained]</code></pre>
+<p>On applique l’objet sur nos données train et test</p>
+<pre class="r"><code>train_data_prep &lt;- bake(rec_obj, new_data = train_data)%&gt;%
+  select(Churn, everything())
+test_data_prep&lt;- bake(rec_obj, new_data= test_data)%&gt;%
+  select(Churn, everything())</code></pre>
+<p>Aprés la transformation</p>
+<pre class="r"><code>train_data_prep%&gt;%
+  glimpse()</code></pre>
+<pre><code>## Rows: 5,626
+## Columns: 36
+## $ Churn                                 &lt;fct&gt; No, Yes, No, Yes, Yes, No, No...
+## $ SeniorCitizen                         &lt;dbl&gt; -0.4402958, -0.4402958, -0.44...
+## $ MonthlyCharges                        &lt;dbl&gt; -0.2608594, -0.3638974, -0.74...
+## $ TotalCharges                          &lt;dbl&gt; 0.389269024, -1.452520489, 0....
+## $ gender_Male                           &lt;dbl&gt; 0.9905875, 0.9905875, 0.99058...
+## $ Partner_Yes                           &lt;dbl&gt; -0.9655394, -0.9655394, -0.96...
+## $ Dependents_Yes                        &lt;dbl&gt; -0.6522585, -0.6522585, -0.65...
+## $ tenure_bin1                           &lt;dbl&gt; -0.4597167, 2.1749433, -0.459...
+## $ tenure_bin2                           &lt;dbl&gt; -0.4382227, -0.4382227, -0.43...
+## $ tenure_bin3                           &lt;dbl&gt; -0.4531211, -0.4531211, -0.45...
+## $ tenure_bin4                           &lt;dbl&gt; 2.2370543, -0.4469528, 2.2370...
+## $ tenure_bin5                           &lt;dbl&gt; -0.452209, -0.452209, -0.4522...
+## $ tenure_bin6                           &lt;dbl&gt; -0.4326772, -0.4326772, -0.43...
+## $ PhoneService_Yes                      &lt;dbl&gt; 0.3271661, 0.3271661, -3.0561...
+## $ MultipleLines_No.phone.service        &lt;dbl&gt; -0.3271661, -0.3271661, 3.056...
+## $ MultipleLines_Yes                     &lt;dbl&gt; -0.8542748, -0.8542748, -0.85...
+## $ InternetService_Fiber.optic           &lt;dbl&gt; -0.8868334, -0.8868334, -0.88...
+## $ InternetService_No                    &lt;dbl&gt; -0.5250931, -0.5250931, -0.52...
+## $ OnlineSecurity_No.internet.service    &lt;dbl&gt; -0.5250931, -0.5250931, -0.52...
+## $ OnlineSecurity_Yes                    &lt;dbl&gt; 1.5778061, 1.5778061, 1.57780...
+## $ OnlineBackup_No.internet.service      &lt;dbl&gt; -0.5250931, -0.5250931, -0.52...
+## $ OnlineBackup_Yes                      &lt;dbl&gt; -0.725464, 1.378232, -0.72546...
+## $ DeviceProtection_No.internet.service  &lt;dbl&gt; -0.5250931, -0.5250931, -0.52...
+## $ DeviceProtection_Yes                  &lt;dbl&gt; 1.3812738, -0.7238665, 1.3812...
+## $ TechSupport_No.internet.service       &lt;dbl&gt; -0.5250931, -0.5250931, -0.52...
+## $ TechSupport_Yes                       &lt;dbl&gt; -0.6392149, -0.6392149, 1.564...
+## $ StreamingTV_No.internet.service       &lt;dbl&gt; -0.5250931, -0.5250931, -0.52...
+## $ StreamingTV_Yes                       &lt;dbl&gt; -0.7901296, -0.7901296, -0.79...
+## $ StreamingMovies_No.internet.service   &lt;dbl&gt; -0.5250931, -0.5250931, -0.52...
+## $ StreamingMovies_Yes                   &lt;dbl&gt; -0.7967925, -0.7967925, -0.79...
+## $ Contract_One.year                     &lt;dbl&gt; 1.9433571, -0.5145003, 1.9433...
+## $ Contract_Two.year                     &lt;dbl&gt; -0.5613245, -0.5613245, -0.56...
+## $ PaperlessBilling_Yes                  &lt;dbl&gt; -1.2062754, 0.8288802, -1.206...
+## $ PaymentMethod_Credit.card..automatic. &lt;dbl&gt; -0.5253134, -0.5253134, -0.52...
+## $ PaymentMethod_Electronic.check        &lt;dbl&gt; -0.7118128, -0.7118128, -0.71...
+## $ PaymentMethod_Mailed.check            &lt;dbl&gt; 1.8394452, 1.8394452, -0.5435...</code></pre>
+</div>
+<div id="modélisation" class="section level3">
+<h3>Modélisation</h3>
+<p>On va créer une fonction pour nous faciliter l’utilisation du package <strong>caret</strong>. C’est un package qui permet d’appeler de nombreuses méthodes de machine learning en offrant une interface unifiée et qui comporte des fonctions utilitaires diverses. Appeler la fonction getModelInfo() pour avoir les informations grâce auxquelles caret sait utiliser les différentes librairies.
+Mais avant, <em>trainControl</em>, on utilise une validation croisée en 5 bloc et répétés 3 fois
+La validation croisée consiste à partager aléatoirement l’échantillon en V segment (blocs) puis itérativement à faire jouer chacune de ses segments de rôle d’échantillon de validation tandis que les V-1 autres consistent l’échantillon d’apprentissage servant à estimer le modèle. Il existe d’autres techniques</p>
+<pre class="r"><code>library(caret)
+fitCtl &lt;- trainControl(method = &quot;repeatedcv&quot;,
+                       number = 5,
+                       repeats = 3)
+
+mlFuncFact &lt;- function(ml_method) {
+  function(data, label) {
+   caret::train(
+      x = data%&gt;%select(-Churn),
+      y = label,
+      method = ml_method,
+      trControl = fitCtl,
+          )
+  }
+}</code></pre>
+<p>Après, on crée une liste des modèles de Machines Learning à comparer : arbre de décision, Random Forest, knn, Xgboost et gbm. Vous la liste compélete des modèles disponible <a href="https://topepo.github.io/caret/available-models.html">ici</a></p>
+<ul>
+<li>Arbre de décision : C’est une des méthodes d’apprentissage supervisé les plus populaires pour les problèmes de classification de données. <a href="https://dataanalyticspost.com/Lexique/arbre-de-decision/">plus</a></li>
+<li>Random Forest :L’algorithme des « forêts aléatoires » (ou Random Forest parfois aussi traduit par forêt d’arbres décisionnels) est un algorithme de classification qui réduit la variance des prévisions d’un arbre de décision seul, améliorant ainsi leurs performances. Pour cela, il combine de nombreux arbres de décisions dans une approche de type bagging. <a href="https://dataanalyticspost.com/Lexique/random-forest/">plus</a></li>
+<li>Knn, k-Nearest Neighbours : c’est un algorithme standard de classification qui repose exclusivement sur le choix de la métrique de classification. Il est “non paramétrique” (seul k doit être fixé) et se base uniquement sur les données d’entraînement.<a href="https://dataanalyticspost.com/Lexique/k-nearest-neighbours/">plus</a></li>
+<li>Xgboost (comme eXtreme Gradient Boosting) est une implémentation open source optimisée de l’algorithme d’arbres de boosting de gradient GBM.Gradient Boosting Machine, est un algorithme d’apprentissage supervisé dont le principe et de combiner les résultats d’un ensemble de modèles plus simple et plus faibles afin de fournir une meilleur prédiction.<a href="https://databusiness-ai.com/lalgorithme-gradient-boosting-machines-xgboost/">plus</a></li>
+</ul>
+<pre class="r"><code>model_df &lt;- list(
+  decision_tree = mlFuncFact(&#39;rpart2&#39;),
+  random_forest = mlFuncFact(&#39;ranger&#39;),
+  boosted_log_reg = mlFuncFact(&#39;LogitBoost&#39;),
+  knn = mlFuncFact(&#39;knn&#39;),
+  #gbm = mlFuncFact(&#39;gbm&#39;),
+  xgb_tree = mlFuncFact(&#39;xgbTree&#39;)
+    ) %&gt;%
+  enframe(name = &#39;model&#39;, value = &#39;model_func&#39;)
+model_df</code></pre>
+<pre><code>## # A tibble: 5 x 2
+##   model           model_func
+##   &lt;chr&gt;           &lt;list&gt;    
+## 1 decision_tree   &lt;fn&gt;      
+## 2 random_forest   &lt;fn&gt;      
+## 3 boosted_log_reg &lt;fn&gt;      
+## 4 knn             &lt;fn&gt;      
+## 5 xgb_tree        &lt;fn&gt;</code></pre>
+<p>La fonction <strong>train</strong> ne se contente pas simplement d’appeler la fonction d’apprentissage de la librairie correspondant à la méthode, elle optimise aussi les paramètres.
+On ajoute nos données de train (échantillon d’apprentissage) et de test.</p>
+<pre class="r"><code>data&lt;-tibble(Training = list(train_data_prep))%&gt;%
+  mutate(label_train = purrr::map(Training, &quot;Churn&quot;),
+         Testing = list(test_data_prep))
+model&lt;- data%&gt;%
+  tidyr::crossing(model_df)
+model</code></pre>
+<pre><code>## # A tibble: 5 x 5
+##   Training            label_train   Testing             model         model_func
+##   &lt;list&gt;              &lt;list&gt;        &lt;list&gt;              &lt;chr&gt;         &lt;list&gt;    
+## 1 &lt;tibble [5,626 x 3~ &lt;fct [5,626]&gt; &lt;tibble [1,406 x 3~ boosted_log_~ &lt;fn&gt;      
+## 2 &lt;tibble [5,626 x 3~ &lt;fct [5,626]&gt; &lt;tibble [1,406 x 3~ decision_tree &lt;fn&gt;      
+## 3 &lt;tibble [5,626 x 3~ &lt;fct [5,626]&gt; &lt;tibble [1,406 x 3~ knn           &lt;fn&gt;      
+## 4 &lt;tibble [5,626 x 3~ &lt;fct [5,626]&gt; &lt;tibble [1,406 x 3~ random_forest &lt;fn&gt;      
+## 5 &lt;tibble [5,626 x 3~ &lt;fct [5,626]&gt; &lt;tibble [1,406 x 3~ xgb_tree      &lt;fn&gt;</code></pre>
+<p>On construits nos modèles à l’aide de la fonction <em>invoke_map</em> qui va appliquer les méthodes sectionnées à notre dataset.
+Ca va prendre un peu de temps…</p>
+<pre class="r"><code>library(tictoc)
+tic()
+trained_model&lt;-model%&gt;%
+  mutate(model_params = map2(Training, label_train,  ~ list(data = .x, label= .y)),
+         model_train = invoke_map(model_func,model_params ))
+trained_model</code></pre>
+<pre><code>## # A tibble: 5 x 7
+##   Training    label_train  Testing    model  model_func model_params model_train
+##   &lt;list&gt;      &lt;list&gt;       &lt;list&gt;     &lt;chr&gt;  &lt;list&gt;     &lt;list&gt;       &lt;list&gt;     
+## 1 &lt;tibble [5~ &lt;fct [5,626~ &lt;tibble [~ boost~ &lt;fn&gt;       &lt;named list~ &lt;train&gt;    
+## 2 &lt;tibble [5~ &lt;fct [5,626~ &lt;tibble [~ decis~ &lt;fn&gt;       &lt;named list~ &lt;train&gt;    
+## 3 &lt;tibble [5~ &lt;fct [5,626~ &lt;tibble [~ knn    &lt;fn&gt;       &lt;named list~ &lt;train&gt;    
+## 4 &lt;tibble [5~ &lt;fct [5,626~ &lt;tibble [~ rando~ &lt;fn&gt;       &lt;named list~ &lt;train&gt;    
+## 5 &lt;tibble [5~ &lt;fct [5,626~ &lt;tibble [~ xgb_t~ &lt;fn&gt;       &lt;named list~ &lt;train&gt;</code></pre>
+<pre class="r"><code>toc()</code></pre>
+<pre><code>## 253.55 sec elapsed</code></pre>
+<p>On test la qualité de nos modèles sur l’échantillon Test avec la fonction <em>predict</em> et on mesure la performance à l’aide de Matrix de confusion <em>confusionMatrix</em></p>
+<pre class="r"><code>tic()
+pred&lt;-trained_model%&gt;%mutate(pred = map2(model_train,Testing, function(.model_train, .Testing) predict(.model_train, .Testing)))
+pred&lt;-pred%&gt;%mutate(ConfusionM = map2(pred, Testing, function(.pred, .Testing) confusionMatrix(.pred, .Testing$Churn)))
+pred</code></pre>
+<pre><code>## # A tibble: 5 x 9
+##   Training label_train Testing model model_func model_params model_train pred 
+##   &lt;list&gt;   &lt;list&gt;      &lt;list&gt;  &lt;chr&gt; &lt;list&gt;     &lt;list&gt;       &lt;list&gt;      &lt;lis&gt;
+## 1 &lt;tibble~ &lt;fct [5,62~ &lt;tibbl~ boos~ &lt;fn&gt;       &lt;named list~ &lt;train&gt;     &lt;fct~
+## 2 &lt;tibble~ &lt;fct [5,62~ &lt;tibbl~ deci~ &lt;fn&gt;       &lt;named list~ &lt;train&gt;     &lt;fct~
+## 3 &lt;tibble~ &lt;fct [5,62~ &lt;tibbl~ knn   &lt;fn&gt;       &lt;named list~ &lt;train&gt;     &lt;fct~
+## 4 &lt;tibble~ &lt;fct [5,62~ &lt;tibbl~ rand~ &lt;fn&gt;       &lt;named list~ &lt;train&gt;     &lt;fct~
+## 5 &lt;tibble~ &lt;fct [5,62~ &lt;tibbl~ xgb_~ &lt;fn&gt;       &lt;named list~ &lt;train&gt;     &lt;fct~
+## # ... with 1 more variable: ConfusionM &lt;list&gt;</code></pre>
+<pre class="r"><code>toc()</code></pre>
+<pre><code>## 0.47 sec elapsed</code></pre>
+<p>On peut aussi mesurer le <strong>taux de succés</strong> Accuracy</p>
+<pre class="r"><code>accuracy &lt;-pred%&gt;% 
+  mutate(
+    accuracy_InSample = map_dbl(model_train, ~max(.x$results$Accuracy)),
+    accuracy_OutSample = map_dbl(ConfusionM, ~max(.x$overall[[&#39;Accuracy&#39;]])),
+    accuracySD_InfSample = map_dbl(model_train, ~max(.x$results$AccuracySD)))%&gt;%
+  select(model, accuracy_InSample,  accuracy_OutSample, accuracySD_InfSample)%&gt;%
+  arrange(desc(accuracy_OutSample))
+accuracy</code></pre>
+<pre><code>## # A tibble: 5 x 4
+##   model           accuracy_InSample accuracy_OutSample accuracySD_InfSample
+##   &lt;chr&gt;                       &lt;dbl&gt;              &lt;dbl&gt;                &lt;dbl&gt;
+## 1 xgb_tree                    0.809              0.793               0.0154
+## 2 random_forest               0.794              0.785               0.0117
+## 3 boosted_log_reg             0.788              0.784               0.0161
+## 4 knn                         0.785              0.779               0.0102
+## 5 decision_tree               0.786              0.772               0.0149</code></pre>
+<p>Sur les paramètres de base de chaque modèle, on a pu avoir un taux de réussite de 78%-80%. Le meilleur algorithme est Xgboost</p>
+<div id="mesure-biais-et-dispersion" class="section level4">
+<h4>Mesure Biais et dispersion</h4>
+<pre class="r"><code>accuracy%&gt;%
+  ggplot(aes(x=model, colour = model))+
+  geom_point(aes(y = accuracy_InSample), size =2)+
+  geom_errorbar(aes(ymin = accuracy_InSample - accuracySD_InfSample,
+                    ymax = accuracy_InSample + accuracySD_InfSample ))+
+  scale_x_discrete()+
+  theme_classic()</code></pre>
+<p><img src="/post/2021-02-28-prediction-du-taux-churn/index.fr-fr_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+</div>
+<div id="comparaison-de-mesure-de-accuracy-par-modéle-sur-les-données-train-et-test-pour-vérifier-un-overfitting" class="section level4">
+<h4>Comparaison de mesure de accuracy par Modéle sur les données train et test pour vérifier un <em>overfitting</em></h4>
+<pre class="r"><code>library(ggrepel)
+accuracy%&gt;%
+  ggplot(aes(x=accuracy_InSample, y =accuracy_OutSample ))+
+  geom_point(aes(colour =model ), size =2)+
+  geom_vline(aes(xintercept = min(accuracy_InSample)), linetype = 5, colour = &quot;gray50&quot;)+
+  geom_hline(aes(yintercept = min(accuracy_OutSample)),  linetype = 5, colour = &quot;gray50&quot;)+
+  ggrepel::geom_label_repel(aes(label = model), size = 3.5, segment.colour = &quot;gray30&quot;, data = accuracy)+
+  theme(legend.position = &quot;none&quot;)+
+  labs( x = &quot; Taux de réussite In-Sample &quot;, y = &quot; Taux de réussite Out-Sample &quot;, colour = &quot;Family&quot;)</code></pre>
+<p><img src="/post/2021-02-28-prediction-du-taux-churn/index.fr-fr_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p>On peut améliorer la performance de notre algorithme en procédant au <strong>Tuning</strong> des paramètres comme le nombre d’arbre, Learning Rate, max_depth,…
+Les paramétres disponible dans le modèle <strong>xgbTree</strong></p>
+<pre class="r"><code>getModelInfo(&quot;xgbTree&quot;)$xgbTree$parameters</code></pre>
+<pre><code>##          parameter   class                          label
+## 1          nrounds numeric          # Boosting Iterations
+## 2        max_depth numeric                 Max Tree Depth
+## 3              eta numeric                      Shrinkage
+## 4            gamma numeric         Minimum Loss Reduction
+## 5 colsample_bytree numeric     Subsample Ratio of Columns
+## 6 min_child_weight numeric Minimum Sum of Instance Weight
+## 7        subsample numeric           Subsample Percentage</code></pre>
+</div>
+</div>
+</div>

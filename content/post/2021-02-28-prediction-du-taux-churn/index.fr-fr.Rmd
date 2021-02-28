@@ -1,0 +1,288 @@
+---
+title: Prediction du Taux Churn
+author: Mohammed Hafrate
+date: '2021-02-28'
+slug: index.fr-fr
+categories: []
+tags: ["R", "Taux de Churn", "Machine Learnig", "caret"]
+keywords:
+  - tech
+thumbnailImage: "/img/ThumImage.PNG"
+thumbnailImagePosition: left
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+
+## Prévision du taux de Churn -- Comparaison de plusieurs Machine Learning
+
+Le taux de churn désigne la proportion des clients que perd une entreprise sur une période donnée. C’est un indicateur marketing clé pour mesurer la fidélité de sa clientèle et un signe d’intérêt que portent les clients aux produits ou service de la marque. Le taux de churn est un indicateur de performance critique pour les entreprises avec un business model basé sur l’abonnement comme le Telecom, Streaming  Vidéos music (Netflix, Spotify,..), SaaS,… 
+Il est important pour les entreprises de se concentrer sur la notion de churn car ce taux permet d’analyser la satisfaction de la clientèle et par extension leur rentabilité. Sans oublier le cout d’acquittions d’un nouveau client requiert des budgets importants.  
+
+> Des études réalisées estiment les dépenses consacrées à l’acquisition client comme étant 5 fois supérieures à celles consacréesà la rétention.
+
+## Pourquoi prévoir le Taux de Churn ?
+
+Détecter les clients avec un risque potentiel de churn à l’avance permet de cibler ces personnes afin de l’empêcher de mettre fin à son abonnement. Aussi, avoir la capacité de prédire avec précision le taux de churn est nécessaire car cela permet à l’entreprise de mieux comprendre les revenus futurs attendus. La prévision de taux churn peut également aider à prendre des décisions proactives et  améliorer les domaines dans lesquels le service client fait défaut.
+Prévoir le taux churn par des machine Learning 
+Dans cet article, nous allons créer des modèles de prévision de taux churn basé sur une base de données de Telecom.
+
+Les données ont été fourni par  *IBM Developer Platform* et disponible [ici](https://raw.githubusercontent.com/hafrate/ChurnRate-Data/main/WA_Fn-UseC_-Telco-Customer-Churn.csv). Certaines informations, telles le nom, les données du client ont été gardés anaonyme par souci de confidentialité mais sans impact sur nos models.
+L’objectif est déterminer si le client a churné  (Yes/No) c’est problem de classement en utilisant plusieurs Machine Learnig pour pouvoir comparer leur performance de prévision.
+J’utilise la library caret combiné avec le fabuleux library purrr
+le processus classique d’un Data Science:
+
+1. Imporation des données
+2. Exploration des données
+3. Split des données 
+4. Preprocessing
+5. Modélisation
+6. Evaluation
+
+L'objectif est d'identifier les client perdus (Churn = yes) à partir de leurs caractéristique (gender, SeniorCitizen, Partner, Dependens, tenure,... ). C'est un exercice de classement
+
+
+### Imporation des données
+```{r}
+library(readr)
+library(dplyr)
+library(purrr)
+library(tibble)
+Customer_Churn <- read_csv("D:/Data/ChurnPrediction/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+Customer_Churn%>%glimpse()
+```
+
+Nous disposons de 7043 observations et 20 variables, dont la cible **Churn**
+
+### Exploration des données
+
+Exploration est la première étape. Le Package **summarytools** permet de faire une analyse descriptive des variables numériques et catégorielles.
+La fonction *dfSummary* est utilisé pour résumer les données, des statistique descriptives, ainsi des graphes pour montrer la distribution 
+
+```{r}
+library(summarytools)
+print(dfSummary(Customer_Churn%>%select(-customerID), graph.magnif = .7), method= "render")
+```
+
+Comme on peut le voir ci-dessous, le type de variable est affiché avec le nom. Viennent ensuite des statistiques descriptives pour les variables numériques et les valeurs des variables catégorielle. Un simple histogramme ou graphe avec des barres est affiché. Aussi, s'il y a des valeurs manquantes ou erreurs. Le Report fournit un résumé concis de l'ensemble des variables dans les données
+
+On peut supprimer certains lignes (TotalCharges) avec des erreurs (11 lignes), sans impact sur les données.
+```{r}
+Customer_Churn<- Customer_Churn%>%tidyr::drop_na()
+```
+
+A l'aide de **ggplot**, on peut aussi visualiser les variables numériques et catégorielles séparément avec le variable Churn
+
+```{r}
+library(tidyverse)
+library(ggthemes)
+theme_set(theme_minimal())
+```
+
+#### Graphe pour les variables catégorielle
+
+```{r}
+Customer_Churn%>%
+  mutate(SeniorCitizen = as.character(SeniorCitizen))%>%
+  select(- customerID)%>%
+  select_if(is.character)%>%
+  select(Churn, everything())%>%
+  gather(x, y, gender:PaymentMethod)%>%
+  count(Churn, x, y)%>%
+  ggplot(aes(x=y, y=n, fill = Churn, color=Churn))+
+  facet_wrap(~ x, ncol= 3, scales= "free")+
+  geom_bar(stat = "identity", alpha = 0.5)
+```
+
+#### Graphe pour les variables  numériques
+
+```{r}
+Customer_Churn%>%
+  select(- customerID)%>%
+  select(Churn, MonthlyCharges, tenure, TotalCharges) %>%
+  gather(x, y, MonthlyCharges:TotalCharges)%>%
+  count(Churn, x, y)%>%
+  ggplot(aes(x=y, fill = Churn, color=Churn))+
+  facet_wrap(~ x, ncol= 3, scales= "free")+
+  geom_density( alpha = 0.5)+
+  scale_color_tableau()+
+  scale_fill_tableau()
+```
+
+### Split des données
+On scinde les données en deux, *train* pour la modélisation 80% et  *test* 20% pour l'évaluation de nos modèles afin d'éviter le sur-apprentissage
+
+```{r}
+library(rsample)
+set.seed(123)
+index_split<- initial_split(Customer_Churn, prop = 0.8)
+train_data<- training(index_split)
+test_data<- testing(index_split)
+index_split
+```
+
+```{r}
+print(train_data%>%nrow())
+print(test_data%>%nrow)
+```
+
+### Preprocessing
+
+Les différences échelles ou de distribution entre les variables peuvent diverger des hypothéses sous-jacent dans les modèles. Il est donc nécessaire d'appliquer des tâches *step* de modification de la distribution ou rendre les valeurs texte en numérique (dummy Variables). 
+Le package **recipes** permet la manipulation facile de la phase de prétraitement. L'objet crée **rec_obj** permet de stocker tous les étapes de preprocessing
+
+```{r}
+library(recipes)
+rec_obj<- recipe(Churn ~ ., Customer_Churn) %>%
+    step_rm(customerID) %>%                                # supprimer le variable customerID
+    step_naomit(all_outcomes(), all_predictors()) %>%      # supprimer les lignes avec erreur
+    step_discretize(tenure, options = list(cuts = 6)) %>%  # convertir valeur numérique en catégorie par tranche
+    step_log(TotalCharges) %>%                             # appliquer log pour Totalcharges - bcq outliers
+    step_dummy(all_nominal(), -all_outcomes()) %>%         # convertir les valeur text en numérique--Encodage des valeurs catégorielle
+    step_center(all_predictors(), -all_outcomes()) %>%     # Standarisation (centré)
+    step_scale(all_predictors(), -all_outcomes()) %>%      # standarisation 
+    prep()
+rec_obj
+```
+
+On applique l'objet sur nos données train et test
+
+```{r}
+train_data_prep <- bake(rec_obj, new_data = train_data)%>%
+  select(Churn, everything())
+test_data_prep<- bake(rec_obj, new_data= test_data)%>%
+  select(Churn, everything())
+
+```
+
+Aprés la transformation
+```{r}
+train_data_prep%>%
+  glimpse()
+```
+
+### Modélisation
+
+On va créer une fonction pour nous faciliter l'utilisation du package **caret**. C'est un package qui permet d'appeler de nombreuses méthodes de machine learning en offrant une interface unifiée et qui comporte des fonctions utilitaires diverses. Appeler la fonction getModelInfo() pour avoir les informations grâce auxquelles caret sait utiliser les différentes librairies.
+Mais avant, *trainControl*, on utilise une validation croisée en 5 bloc et répétés 3 fois
+La validation croisée consiste à partager aléatoirement l’échantillon en V segment (blocs) puis itérativement à faire jouer chacune de ses segments de rôle d’échantillon de validation tandis que les V-1 autres consistent l’échantillon d’apprentissage servant à estimer le modèle. Il existe d’autres techniques 
+
+```{r}
+library(caret)
+fitCtl <- trainControl(method = "repeatedcv",
+                       number = 5,
+                       repeats = 3)
+
+mlFuncFact <- function(ml_method) {
+  function(data, label) {
+   caret::train(
+      x = data%>%select(-Churn),
+      y = label,
+      method = ml_method,
+      trControl = fitCtl,
+          )
+  }
+}
+```
+
+Après, on crée une liste des modèles de Machines Learning à comparer : arbre de décision, Random Forest, knn, Xgboost et gbm. Vous la liste compélete des modèles disponible [ici](https://topepo.github.io/caret/available-models.html)
+
+ - Arbre de décision : C’est une des méthodes d’apprentissage supervisé les plus populaires pour les problèmes de classification de données. [plus](https://dataanalyticspost.com/Lexique/arbre-de-decision/)
+  - Random Forest :L’algorithme des « forêts aléatoires » (ou Random Forest parfois aussi traduit par forêt d’arbres décisionnels) est un algorithme de classification qui réduit la variance des prévisions d’un arbre de décision seul, améliorant ainsi leurs performances. Pour cela, il combine de nombreux arbres de décisions dans une approche de type bagging. [plus](https://dataanalyticspost.com/Lexique/random-forest/)
+  - Knn, k-Nearest Neighbours : c'est un algorithme standard de classification qui repose exclusivement sur le choix de la métrique de classification. Il est “non paramétrique” (seul k doit être fixé) et se base uniquement sur les données d’entraînement.[plus](https://dataanalyticspost.com/Lexique/k-nearest-neighbours/)
+ - Xgboost (comme eXtreme Gradient Boosting) est une implémentation open source optimisée de l’algorithme d’arbres de boosting de gradient GBM.Gradient Boosting Machine, est un algorithme d’apprentissage supervisé dont le principe et de combiner les résultats d’un ensemble de modèles plus simple et plus faibles afin de fournir une meilleur prédiction.[plus](https://databusiness-ai.com/lalgorithme-gradient-boosting-machines-xgboost/)
+
+ 
+```{r}
+model_df <- list(
+  decision_tree = mlFuncFact('rpart2'),
+  random_forest = mlFuncFact('ranger'),
+  boosted_log_reg = mlFuncFact('LogitBoost'),
+  knn = mlFuncFact('knn'),
+  #gbm = mlFuncFact('gbm'),
+  xgb_tree = mlFuncFact('xgbTree')
+    ) %>%
+  enframe(name = 'model', value = 'model_func')
+model_df
+```
+
+La fonction **train** ne se contente pas simplement d'appeler la fonction d'apprentissage de la librairie correspondant à la méthode, elle optimise aussi les paramètres.
+On ajoute nos données de train (échantillon d'apprentissage) et de test.
+
+```{r}
+data<-tibble(Training = list(train_data_prep))%>%
+  mutate(label_train = purrr::map(Training, "Churn"),
+         Testing = list(test_data_prep))
+model<- data%>%
+  tidyr::crossing(model_df)
+model
+```
+On construits nos modèles à l'aide de la fonction *invoke_map* qui va appliquer les méthodes sectionnées à notre dataset. 
+Ca va prendre un peu de temps...
+
+```{r}
+library(tictoc)
+tic()
+trained_model<-model%>%
+  mutate(model_params = map2(Training, label_train,  ~ list(data = .x, label= .y)),
+         model_train = invoke_map(model_func,model_params ))
+trained_model
+toc()
+```
+On test la qualité de nos modèles sur l'échantillon Test avec la fonction *predict* et on mesure la performance à l'aide de Matrix de confusion *confusionMatrix* 
+
+```{r}
+tic()
+pred<-trained_model%>%mutate(pred = map2(model_train,Testing, function(.model_train, .Testing) predict(.model_train, .Testing)))
+pred<-pred%>%mutate(ConfusionM = map2(pred, Testing, function(.pred, .Testing) confusionMatrix(.pred, .Testing$Churn)))
+pred
+toc()
+```
+
+On peut aussi mesurer le **taux de succés** Accuracy
+
+```{r}
+accuracy <-pred%>% 
+  mutate(
+    accuracy_InSample = map_dbl(model_train, ~max(.x$results$Accuracy)),
+    accuracy_OutSample = map_dbl(ConfusionM, ~max(.x$overall[['Accuracy']])),
+    accuracySD_InfSample = map_dbl(model_train, ~max(.x$results$AccuracySD)))%>%
+  select(model, accuracy_InSample,  accuracy_OutSample, accuracySD_InfSample)%>%
+  arrange(desc(accuracy_OutSample))
+accuracy
+```
+Sur les paramètres de base de chaque modèle, on a pu avoir un taux de réussite de 78%-80%. Le meilleur algorithme est Xgboost
+
+#### Mesure  Biais et dispersion
+```{r}
+accuracy%>%
+  ggplot(aes(x=model, colour = model))+
+  geom_point(aes(y = accuracy_InSample), size =2)+
+  geom_errorbar(aes(ymin = accuracy_InSample - accuracySD_InfSample,
+                    ymax = accuracy_InSample + accuracySD_InfSample ))+
+  scale_x_discrete()+
+  theme_classic()
+```
+
+#### Comparaison de mesure de accuracy par Modéle sur les données train et test pour vérifier un *overfitting*
+
+```{r}
+library(ggrepel)
+accuracy%>%
+  ggplot(aes(x=accuracy_InSample, y =accuracy_OutSample ))+
+  geom_point(aes(colour =model ), size =2)+
+  geom_vline(aes(xintercept = min(accuracy_InSample)), linetype = 5, colour = "gray50")+
+  geom_hline(aes(yintercept = min(accuracy_OutSample)),  linetype = 5, colour = "gray50")+
+  ggrepel::geom_label_repel(aes(label = model), size = 3.5, segment.colour = "gray30", data = accuracy)+
+  theme(legend.position = "none")+
+  labs( x = " Taux de réussite In-Sample ", y = " Taux de réussite Out-Sample ", colour = "Family")
+```
+
+On peut améliorer la performance de notre algorithme en procédant au **Tuning** des paramètres comme le nombre d'arbre, Learning Rate, max_depth,... 
+Les paramétres disponible dans le modèle **xgbTree**
+```{r}
+getModelInfo("xgbTree")$xgbTree$parameters
+```
