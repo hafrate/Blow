@@ -1,0 +1,439 @@
+---
+title: Text Mining -  le Taux d'actualisation en IFRS
+author: Mohammed Hafrate'
+date: '2021-12-17'
+slug: textMining_ifrs
+categories:
+  - Rstat
+  - IFRS
+  - Discout Rate
+tags: []
+keywords:
+  - tech
+subtitle : 'Fouille dans données non structurés en format PDF'
+summary: "Analyse de Fréauence du Taux d'actualisation dans les Normes IFRS."
+thumbnailImage: "/img/discountRate.PNG"
+thumbnailImagePosition: left
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+<link href="/rmarkdown-libs/lightable/lightable.css" rel="stylesheet" />
+
+
+<p>Le Text Mining, fouille de données, regroupe l’ensemble de techniques de Data Mining permettant le traitement des données non structurés (non structured data) que sont les textes écrites somme des fichiers de Word, Emails, pdf..</p>
+<blockquote>
+<p>Le text mining est utilisé pour classer des documents, réaliser des résumés de synthèse automatique ou encore pour assister la veille stratégique ou technologique selon des pistes de recherche prédéfinis.</p>
+</blockquote>
+<p><em>Notre target</em> : utiliser la technique de fréquence pour fouiller l’ensemble de normes IFRS et extraire le mot <em>taux d’actualisation</em> pour facilter l’exploration et l’analyse par norme du taux en normes IFRS.</p>
+<div id="cest-quoi-le-taux-dactualisation-en-ifrs" class="section level3">
+<h3>C’est quoi le taux d’actualisation en IFRS ?</h3>
+<p>La définition proposé par l’IASB :</p>
+<p><em>Le taux d’actualisation est le taux qui est utilisé pour déterminer la valeur actualisée des flux de trésorerie. Les techniques d’actualisation servent à évaluer la juste valeur, la valeur d’utilité ou toute autre valeur actuelle d’un actif ou d’un passif, à titre de méthode d’évaluation initiale ou ultérieure.</em></p>
+<p>Pour en savoir plus merci de consulter ce <a href="https://www.iasplus.com/fr-ca/projets/ifrs/projets-termines/discount-rates-research">lien</a>.</p>
+<p>La définition est très ambiguë. Aussi, vu mon expérience en consolidation IFRS depuis 2008, je vous assure qu’il n’y a pas un seul taux applicable, il y en a plusieurs, en d’autres termes, une seule définition mais avec plusieurs model de calcul.</p>
+<p>Du côté de recherche, Véronique Blum et Pierre Thérond, Dans leur rapport de recherche à l’Autorité des normes comptables (ANC), ont cherché à explorer et comprendre les différents taux utilisés et dans quelle mesure combler l’écart entre les théories et les pratiques.</p>
+<p>Un travail qui mérite de le consulter pour les intéressés et je vous encourage à faire, le <a href="https://www.anc.gouv.fr/files/live/sites/anc/files/contributed/ANC/3_Recherche/D_Etats%20generaux/2019/Policy%20papers/TR3_PP_BLUM_THEROND_2019_Francais-summary-final.pdf">lien</a>.</p>
+<p>Pour en arriver à ce résultat, que je trouve exceptionnel, identifier les différentes taux d’actualisation appliqués dans les normes IFRS. Les chercheurs ont récolté des données manuellement et passé au crible chaque norme… C’est lourde sachant que le manuel officiel des normes IFRS de l’EU représente de plus 1200 pages…</p>
+<p>Et si on peut automatiser ce process et de pouvoir trouver le mots <em>discount rate</em> et l’extraire de son contexte, paragraphe, et par normes…</p>
+<p>Le post n’est pas orienté de définir les modes de calcul des différents taux utilisés en IFRS mais de montrer le potentiel des Text Mining dans différents domaines.</p>
+</div>
+<div id="voici-les-étapes-à-suivre" class="section level3">
+<h3>Voici les étapes à suivre :</h3>
+<ol style="list-style-type: decimal">
+<li>Upload des fichiers pdf par normes</li>
+<li>Upload les library nécessaire</li>
+<li>Transformer les données textuelles en données exploitable</li>
+<li>Fréquence de mots par normes</li>
+<li>Extraire les paragraphes</li>
+</ol>
+</div>
+<div id="step-1" class="section level3">
+<h3>Step 1</h3>
+<p>L’étape premiére consite à trouver l’ensemble des normes adoptés par l’EU dans un foramt de pdf et les télécharger pour en analyser. <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02008R1126-20210401">le lien</a>.
+Les fichiers séparés par normes est disponible <a href="www.github.com/hafrate">ici</a>
+Aprés, uploader les library de R pour la manipulation des dataframe et la extraction des données des PDF.</p>
+</div>
+<div id="upload-des-library" class="section level3">
+<h3>Upload des library</h3>
+<p>On a besoin des library standard avec <a href="https://cran.r-project.org/web/packages/pdfsearch/vignettes/intro_to_pdfsearch.html">pdfsearch</a> pour chercher dans les fichiers PDF.
+Si vous disposez pas de ces packages, vous pouvez utilisé la commande « install.packages » par exemple install.packages(“purrr”).</p>
+<pre class="r"><code>library(dplyr)
+library(pdfsearch)
+library(tidyverse)
+library(ggthemes)
+library(purrr)
+library(kableExtra)</code></pre>
+<pre class="r"><code>wd &lt;- &quot;D:/Share/Blog/IFRS&quot; # changer le dossier
+wd</code></pre>
+<pre><code>## [1] &quot;D:/Share/Blog/IFRS&quot;</code></pre>
+<pre class="r"><code>file_path &lt;- fs::dir_ls(&quot;D:/Share/Blog/IFRS/ListPDF&quot;, glob = &quot;*.pdf&quot;)
+file_path</code></pre>
+<pre><code>## D:/Share/Blog/IFRS/ListPDF/IAS 1 Presentation of financial statements.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 10 Events after the balance sheet date.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 11 Construction contracts.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 12 Income taxes.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 16 Property, plant and equipment.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 17 Leases.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 18 Revenue.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 19 Employee benefits.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 2 Inventories.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 20 Accounting for government grants and disclosure of government assistance.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 21 The effects of changes in foreign exchange rates.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 23 Borrowing costs.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 24 Related party disclosures.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 26 Accounting and reporting by retirement benefit plans.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 27 Consolidated and separate financial statements.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 28 Investments in associates.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 29 Financial reporting in hyperinflationary economies.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 33 Earnings per share.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 34 Interim financial reporting.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 36 Impairment of assets.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 37 Provisions, contingent liabilities and contingent assets.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 38 Intangible assets.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 40 Investment property.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 41 Agriculture.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 7 Cash-flow statements.pdf
+## D:/Share/Blog/IFRS/ListPDF/IAS 8 Accounting policies, changes in accounting estimates and errors.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 1 First-time adoption of international financial reporting standards.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 10 Consolidated Financial Statements.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 11 Joint Arrangements.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 12 Disclosure of Interests in Other Entities.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 13 Fair Value Measurement.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 15 Revenue from Contracts with Customers.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 16 Leases.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 2 Share-based payment.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 3 Business combinations.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 4 Insurance contracts.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 5 Non-current assets held for sale and discontinued operations.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 6 Exploration for and evaluation of mineral resources.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 8 Operating segments.pdf
+## D:/Share/Blog/IFRS/ListPDF/IFRS 9 Financial Instruments.pdf</code></pre>
+<p>Pour lire l’ensemble des fichiers pdf dans notre dossier et passer la fonction <em>keyword_search</em> pour chercher le mot (keyword) « discount rate », j’utilise la fonction map de library Purrr. C’est une fonction loop mais plus performante.
+Dans le champ keyword, on peut mettre une liste de mots par exemple c(discount rate , asset, lease).</p>
+<pre class="r"><code>resultat &lt;- file_path %&gt;%
+  map(function(path) {
+    keyword_search(path,
+      keyword = c(&quot;discount rate&quot;),
+      path = TRUE, surround_lines = 1
+    )
+  })
+resultat[[1]] # représente la premiére valeur -- IAS 1</code></pre>
+<pre><code>## # A tibble: 1 x 5
+##   keyword       page_num line_num line_text token_text
+##   &lt;chr&gt;            &lt;int&gt;    &lt;int&gt; &lt;list&gt;    &lt;list&gt;    
+## 1 discount rate        7      302 &lt;chr [3]&gt; &lt;list [3]&gt;</code></pre>
+<p>Pour accéder au texte, on utilise <em>line_text</em>. Par exemple pour la norme IAS 1</p>
+<pre class="r"><code>resultat[[1]]$line_text</code></pre>
+<pre><code>## [[1]]
+## [1] &quot;For example, in the absence of recently observed market prices, future-oriented estimates are necessary to measure the recoverable amount of classes of property, plant and equipment, the effect of technological obsolescence on inventories, provisions subject to the future outcome of litigation in progress, and long-term employee benefit liabilities such as pension obligations. &quot;
+## [2] &quot;These estimates involve assumptions about such items as the risk adjustment to cash flows or discount rates, future changes in salaries and future changes in prices affecting other costs. &quot;                                                                                                                                                                                                
+## [3] &quot;127    The assumptions and other sources of estimation uncertainty disclosed in accordance with paragraph 125 relate to the estimates that require management’s most difficult, subjective or complex judgements. &quot;</code></pre>
+<p>l’ancien code est correct, il permet l’itération sur l’ensemble des fichiers mais il manque le nom de la norme, pour y arriver, on créé un <em>tibble</em></p>
+<pre class="r"><code>resultat2 &lt;- tibble(Normes = basename(file_path)) %&gt;%
+  mutate(content = file_path %&gt;% map(function(path) {
+    keyword_search(path,
+      keyword = c(&quot;discount rate&quot;),
+      path = TRUE, surround_lines = 1
+    )
+  }))
+resultat2</code></pre>
+<pre><code>## # A tibble: 40 x 2
+##    Normes                                                      content          
+##    &lt;chr&gt;                                                       &lt;named list&gt;     
+##  1 IAS 1 Presentation of financial statements.pdf              &lt;tibble[,5] [1 x~
+##  2 IAS 10 Events after the balance sheet date.pdf              &lt;tibble[,5] [0 x~
+##  3 IAS 11 Construction contracts.pdf                           &lt;tibble[,5] [0 x~
+##  4 IAS 12 Income taxes.pdf                                     &lt;tibble[,5] [0 x~
+##  5 IAS 16 Property, plant and equipment.pdf                    &lt;tibble[,5] [0 x~
+##  6 IAS 17 Leases.pdf                                           &lt;tibble[,5] [2 x~
+##  7 IAS 18 Revenue.pdf                                          &lt;tibble[,5] [0 x~
+##  8 IAS 19 Employee benefits.pdf                                &lt;tibble[,5] [20 ~
+##  9 IAS 2 Inventories.pdf                                       &lt;tibble[,5] [0 x~
+## 10 IAS 20 Accounting for government grants and disclosure of ~ &lt;tibble[,5] [0 x~
+## # ... with 30 more rows</code></pre>
+<p>El Voilà :)
+on peut transformer ce tibble en dataframe pour explorer plus.</p>
+<pre class="r"><code>resultat2_df &lt;- resultat2 %&gt;% tidyr::unnest(cols = c(content))
+resultat2_df</code></pre>
+<pre><code>## # A tibble: 108 x 6
+##    Normes                      keyword    page_num line_num line_text token_text
+##    &lt;chr&gt;                       &lt;chr&gt;         &lt;int&gt;    &lt;int&gt; &lt;list&gt;    &lt;list&gt;    
+##  1 IAS 1 Presentation of fina~ discount ~        7      302 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  2 IAS 17 Leases.pdf           discount ~        1       27 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  3 IAS 17 Leases.pdf           discount ~        2       68 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  4 IAS 19 Employee benefits.p~ discount ~        4      151 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  5 IAS 19 Employee benefits.p~ discount ~        5      178 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  6 IAS 19 Employee benefits.p~ discount ~        5      189 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  7 IAS 19 Employee benefits.p~ discount ~        6      268 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  8 IAS 19 Employee benefits.p~ discount ~        6      270 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  9 IAS 19 Employee benefits.p~ discount ~        7      272 &lt;chr [3]&gt; &lt;list [3]&gt;
+## 10 IAS 19 Employee benefits.p~ discount ~        7      276 &lt;chr [3]&gt; &lt;list [3]&gt;
+## # ... with 98 more rows</code></pre>
+</div>
+<div id="fréquence-du-mot-discount-rate-par-norme" class="section level3">
+<h3>Fréquence du Mot <em>discount rate</em> par norme</h3>
+<pre class="r"><code>frequence &lt;- resultat2 %&gt;%
+  mutate(nb = map_int(content, nrow)) %&gt;%
+  filter(nb &gt; 0) %&gt;%
+  arrange(desc(nb))
+frequence</code></pre>
+<pre><code>## # A tibble: 11 x 3
+##    Normes                                                 content             nb
+##    &lt;chr&gt;                                                  &lt;named list&gt;     &lt;int&gt;
+##  1 IAS 36 Impairment of assets.pdf                        &lt;tibble[,5] [36~    36
+##  2 IFRS 13 Fair Value Measurement.pdf                     &lt;tibble[,5] [21~    21
+##  3 IAS 19 Employee benefits.pdf                           &lt;tibble[,5] [20~    20
+##  4 IFRS 16 Leases.pdf                                     &lt;tibble[,5] [9 ~     9
+##  5 IFRS 4 Insurance contracts.pdf                         &lt;tibble[,5] [8 ~     8
+##  6 IFRS 9 Financial Instruments.pdf                       &lt;tibble[,5] [4 ~     4
+##  7 IAS 37 Provisions, contingent liabilities and conting~ &lt;tibble[,5] [3 ~     3
+##  8 IAS 17 Leases.pdf                                      &lt;tibble[,5] [2 ~     2
+##  9 IFRS 1 First-time adoption of international financial~ &lt;tibble[,5] [2 ~     2
+## 10 IFRS 15 Revenue from Contracts with Customers.pdf      &lt;tibble[,5] [2 ~     2
+## 11 IAS 1 Presentation of financial statements.pdf         &lt;tibble[,5] [1 ~     1</code></pre>
+<p>On crée notre graphe avec le package ggplot2</p>
+<pre class="r"><code>frequence %&gt;%
+  mutate(Normes = str_sub(Normes, 1, -5)) %&gt;%
+  ggplot() +
+  geom_bar(aes(reorder(Normes, nb), nb, fill = nb), stat = &quot;identity&quot;) +
+  scale_fill_viridis_c(option = &quot;magma&quot;, direction = -1) +
+  coord_flip() +
+  theme_minimal(base_size = 15) +
+  labs(
+    x = &quot;Norme&quot;, y = &quot;Nombre d&#39;occurence&quot;,
+    title = &quot;Taux d&#39;actualisation en IFRS&quot;,
+    subtitle = &quot;Les normes de l&#39;évaluation des Actifs non courant avec plus de fréquence&quot;
+  )</code></pre>
+<p><img src="/post/2021-12-17-text-mining-application-pour-le-taux-d-actualisation-en-ifrs/index.en-us_files/figure-html/unnamed-chunk-9-1.png" width="1440" /></p>
+<p>On veut accéder au paragraphe; par exemple pour la norme - IFRS 13 Faire Value</p>
+<pre class="r"><code>IFRS_13 &lt;- resultat2_df %&gt;% filter(Normes == &quot;IFRS 13 Fair Value Measurement.pdf&quot;)
+IFRS_13</code></pre>
+<pre><code>## # A tibble: 21 x 6
+##    Normes                     keyword     page_num line_num line_text token_text
+##    &lt;chr&gt;                      &lt;chr&gt;          &lt;int&gt;    &lt;int&gt; &lt;list&gt;    &lt;list&gt;    
+##  1 IFRS 13 Fair Value Measur~ discount r~        6      273 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  2 IFRS 13 Fair Value Measur~ discount r~        6      276 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  3 IFRS 13 Fair Value Measur~ discount r~        6      279 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  4 IFRS 13 Fair Value Measur~ discount r~        6      280 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  5 IFRS 13 Fair Value Measur~ discount r~        6      281 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  6 IFRS 13 Fair Value Measur~ discount r~        6      282 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  7 IFRS 13 Fair Value Measur~ discount r~        6      286 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  8 IFRS 13 Fair Value Measur~ discount r~        7      297 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  9 IFRS 13 Fair Value Measur~ discount r~        7      298 &lt;chr [3]&gt; &lt;list [3]&gt;
+## 10 IFRS 13 Fair Value Measur~ discount r~        7      299 &lt;chr [3]&gt; &lt;list [3]&gt;
+## # ... with 11 more rows</code></pre>
+<p>Formatter le output à l’aide de package kableExtra</p>
+<pre class="r"><code>text &lt;- IFRS_13 %&gt;%
+  select(page_num, line_text) %&gt;%
+  rowwise() %&gt;%
+  mutate(Texte = paste(line_text, collapse = &quot; &quot;)) %&gt;%
+  select(page_num, Texte) %&gt;%
+  unnest(Texte)
+
+kbl(text) %&gt;%
+  kable_paper(full_width = F) %&gt;%
+  column_spec(1, bold = T, border_right = T) %&gt;%
+  column_spec(2, width = &quot;20cm&quot;, background = &quot;#E8D2CA&quot;)</code></pre>
+<table class=" lightable-paper" style='font-family: "Arial Narrow", arial, helvetica, sans-serif; width: auto !important; margin-left: auto; margin-right: auto;'>
+<thead>
+<tr>
+<th style="text-align:right;">
+page_num
+</th>
+<th style="text-align:left;">
+Texte
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+6
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+Present value techniques B12 Paragraphs B13–B30 describe the use of present value techniques to measure fair value. Those paragraphs focus on a discount rate adjustment technique and an expected cash flow (expected present value) technique. Those paragraphs neither prescribe the use of a single specific present value technique nor limit the use of present value techniques to measure fair value to the techniques discussed.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+6
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+The present value technique used to measure fair value will depend on facts and circumstances specific to the asset or liability being measured (eg whether prices for comparable assets or liabilities can be observed in the market) and the availability of sufficient data. The components of a present value measurement B13 Present value (ie an application of the income approach) is a tool used to link future amounts (eg cash flows or values) to a present amount using a discount rate. A fair value measurement of an asset or a liability using a present value technique captures all the following elements from the perspective of market participants at the measurement date: (a) an estimate of future cash flows for the asset or liability being measured. (b) expectations about possible variations in the amount and timing of the cash flows representing the uncertainty inherent in the cash flows. (c) the time value of money, represented by the rate on risk-free monetary assets that have maturity dates or durations that coincide with the period covered by the cash flows and pose neither uncertainty in timing nor risk of default to the holder (ie a risk-free interest rate). (d) the price for bearing the uncertainty inherent in the cash flows (ie a risk premium). (e) other factors that market participants would take into account in the circumstances. (f) for a liability, the non-performance risk relating to that liability, including the entity’s (ie the obligor’s) own credit risk.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+6
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+General principles B14 Present value techniques differ in how they capture the elements in paragraph B13. However, all the following general principles govern the application of any present value technique used to measure fair value: (a) Cash flows and discount rates should reflect assumptions that market participants would use when pricing the asset or liability. (b) Cash flows and discount rates should take into account only the factors attributable to the asset or liability being measured. 02008R1126 — EN — 13.10.2020 — 020.001 — 994 &lt;U+25BC&gt;M33 (c) To avoid double-counting or omitting the effects of risk factors, discount rates should reflect assumptions that are consistent with those inherent in the cash flows.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+6
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+However, all the following general principles govern the application of any present value technique used to measure fair value: (a) Cash flows and discount rates should reflect assumptions that market participants would use when pricing the asset or liability. (b) Cash flows and discount rates should take into account only the factors attributable to the asset or liability being measured. 02008R1126 — EN — 13.10.2020 — 020.001 — 994 &lt;U+25BC&gt;M33 (c) To avoid double-counting or omitting the effects of risk factors, discount rates should reflect assumptions that are consistent with those inherent in the cash flows. For example, a discount rate that reflects the uncertainty in expectations about future defaults is appropriate if using contractual cash flows of a loan (ie a discount rate adjustment technique).
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+6
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+02008R1126 — EN — 13.10.2020 — 020.001 — 994 &lt;U+25BC&gt;M33 (c) To avoid double-counting or omitting the effects of risk factors, discount rates should reflect assumptions that are consistent with those inherent in the cash flows. For example, a discount rate that reflects the uncertainty in expectations about future defaults is appropriate if using contractual cash flows of a loan (ie a discount rate adjustment technique). That same rate should not be used if using expected (ie probability-weighted) cash flows (ie an expected present value technique) because the expected cash flows already reflect assumptions about the uncertainty in future defaults; instead, a discount rate that is commensurate with the risk inherent in the expected cash flows should be used. (d) Assumptions about cash flows and discount rates should be internally consistent.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+6
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+For example, a discount rate that reflects the uncertainty in expectations about future defaults is appropriate if using contractual cash flows of a loan (ie a discount rate adjustment technique). That same rate should not be used if using expected (ie probability-weighted) cash flows (ie an expected present value technique) because the expected cash flows already reflect assumptions about the uncertainty in future defaults; instead, a discount rate that is commensurate with the risk inherent in the expected cash flows should be used. (d) Assumptions about cash flows and discount rates should be internally consistent. For example, nominal cash flows, which include the effect of inflation, should be discounted at a rate that includes the effect of inflation.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+6
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+Real cash flows, which exclude the effect of inflation, should be discounted at a rate that excludes the effect of inflation. Similarly, after-tax cash flows should be discounted using an after-tax discount rate. Pre-tax cash flows should be discounted at a rate consistent with those cash flows. (e) Discount rates should be consistent with the underlying economic factors of the currency in which the cash flows are denominated.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+7
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+B17 Present value techniques differ in how they adjust for risk and in the type of cash flows they use. For example: (a) The discount rate adjustment technique (see paragraphs B18–B22) uses a risk-adjusted discount rate and contractual, promised or most likely cash flows. (b) Method 1 of the expected present value technique (see paragraph B25) uses risk-adjusted expected cash flows and a risk-free rate. (c) Method 2 of the expected present value technique (see paragraph B26) uses expected cash flows that are not risk-adjusted and a discount rate adjusted to include the risk premium that market participants require. That rate is different from the rate used in the discount rate adjustment technique.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+7
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+For example: (a) The discount rate adjustment technique (see paragraphs B18–B22) uses a risk-adjusted discount rate and contractual, promised or most likely cash flows. (b) Method 1 of the expected present value technique (see paragraph B25) uses risk-adjusted expected cash flows and a risk-free rate. (c) Method 2 of the expected present value technique (see paragraph B26) uses expected cash flows that are not risk-adjusted and a discount rate adjusted to include the risk premium that market participants require. That rate is different from the rate used in the discount rate adjustment technique. 02008R1126 — EN — 13.10.2020 — 020.001 — 995 &lt;U+25BC&gt;M33 Discount rate adjustment technique B18 The discount rate adjustment technique uses a single set of cash flows from the range of possible estimated amounts, whether contractual or promised (as is the case for a bond) or most likely cash flows.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+7
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+That rate is different from the rate used in the discount rate adjustment technique. 02008R1126 — EN — 13.10.2020 — 020.001 — 995 &lt;U+25BC&gt;M33 Discount rate adjustment technique B18 The discount rate adjustment technique uses a single set of cash flows from the range of possible estimated amounts, whether contractual or promised (as is the case for a bond) or most likely cash flows. In all cases, those cash flows are conditional upon the occurrence of specified events (eg contractual or promised cash flows for a bond are conditional on the event of no default by the debtor).
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+7
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+In all cases, those cash flows are conditional upon the occurrence of specified events (eg contractual or promised cash flows for a bond are conditional on the event of no default by the debtor). The discount rate used in the discount rate adjustment technique is derived from observed rates of return for comparable assets or liabilities that are traded in the market. Accordingly, the contractual, promised or most likely cash flows are discounted at an observed or estimated market rate for such conditional cash flows (ie a market rate of return).
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+7
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+Accordingly, the contractual, promised or most likely cash flows are discounted at an observed or estimated market rate for such conditional cash flows (ie a market rate of return). B19 The discount rate adjustment technique requires an analysis of market data for comparable assets or liabilities. Comparability is established by considering the nature of the cash flows (eg whether the cash flows are contractual or non-contractual and are likely to respond similarly to changes in economic conditions), as well as other factors (eg credit standing, collateral, duration, restrictive covenants and liquidity).
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+7
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+Comparability is established by considering the nature of the cash flows (eg whether the cash flows are contractual or non-contractual and are likely to respond similarly to changes in economic conditions), as well as other factors (eg credit standing, collateral, duration, restrictive covenants and liquidity). Alternatively, if a single comparable asset or liability does not fairly reflect the risk inherent in the cash flows of the asset or liability being measured, it may be possible to derive a discount rate using data for several comparable assets or liabilities in conjunction with the risk-free yield curve (ie using a ‘build-up’ approach). B20 To illustrate a build-up approach, assume that Asset A is a contractual right to receive CU800 (1) in one year (ie there is no timing uncer­ tainty).
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+7
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+<ol style="list-style-type: decimal">
+<li>In this IFRS monetary amounts are denominated in ‘currency units (CU)’. 02008R1126 — EN — 13.10.2020 — 020.001 — 996 &lt;U+25BC&gt;M33 B22 When the discount rate adjustment technique is applied to fixed receipts or payments, the adjustment for risk inherent in the cash flows of the asset or liability being measured is included in the discount rate. In some applications of the discount rate adjustment technique to cash flows that are not fixed receipts or payments, an adjustment to the cash flows may be necessary to achieve compara­ bility with the observed asset or liability from which the discount rate is derived.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+7
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+02008R1126 — EN — 13.10.2020 — 020.001 — 996 &lt;U+25BC&gt;M33 B22 When the discount rate adjustment technique is applied to fixed receipts or payments, the adjustment for risk inherent in the cash flows of the asset or liability being measured is included in the discount rate. In some applications of the discount rate adjustment technique to cash flows that are not fixed receipts or payments, an adjustment to the cash flows may be necessary to achieve compara­ bility with the observed asset or liability from which the discount rate is derived. Expected present value technique B23 The expected present value technique uses as a starting point a set of cash flows that represents the probability-weighted average of all possible future cash flows (ie the expected cash flows).
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+7
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+The resulting estimate is identical to expected value, which, in statistical terms, is the weighted average of a discrete random variable’s possible values with the respective probabilities as the weights. Because all possible cash flows are probability-weighted, the resulting expected cash flow is not conditional upon the occurrence of any specified event (unlike the cash flows used in the discount rate adjustment technique). B24 In making an investment decision, risk-averse market participants would take into account the risk that the actual cash flows may differ from the expected cash flows.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+7
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+Models used for pricing risky assets, such as the capital asset pricing model, can be used to estimate the expected rate of return. Because the discount rate used in the discount rate adjustment technique is a rate of return relating to conditional cash flows, it is likely to be higher than the discount rate used in Method 2 of the expected present value technique, which is an expected rate of return relating to expected or probability-weighted cash flows. B27 To illustrate Methods 1 and 2, assume that an asset has expected cash flows of CU780 in one year determined on the basis of the possible cash flows and probabilities shown below.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+8
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+The present value (ie the fair value) of the asset is CU722 (CU758/1,05). (b) Using Method 2, the expected cash flows are not adjusted for systematic (ie market) risk. Rather, the adjustment for that risk is included in the discount rate. Thus, the expected cash flows are discounted at an expected rate of return of 8 per cent (ie the 5 per cent risk-free interest rate plus the 3 per cent systematic risk premium).
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+8
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+In other cases an entity needs to estimate those components separately (eg when using the price a third party contractor would charge on a cost plus basis because the contractor in that case would not bear the risk of future changes in costs). 02008R1126 — EN — 13.10.2020 — 020.001 — 999 &lt;U+25BC&gt;M33 B33 An entity can include a risk premium in the fair value measurement of a liability or an entity’s own equity instrument that is not held by another party as an asset in one of the following ways: (a) by adjusting the cash flows (ie as an increase in the amount of cash outflows); or (b) by adjusting the rate used to discount the future cash flows to their present values (ie as a reduction in the discount rate). An entity shall ensure that it does not double-count or omit adjustments for risk.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+8
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+An entity shall ensure that it does not double-count or omit adjustments for risk. For example, if the estimated cash flows are increased to take into account the compensation for assuming the risk associated with the obligation, the discount rate should not be adjusted to reflect that risk. INPUTS TO VALUATION TECHNIQUES (PARAGRAPHS 67–71) B34 Examples of markets in which inputs might be observable for some assets and liabilities (eg financial instruments) include the following: (a) Exchange markets.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+9
+</td>
+<td style="text-align:left;width: 20cm; background-color: #E8D2CA !important;">
+A Level 3 input would be a current estimate using the entity’s own data about the future cash outflows to be paid to fulfil the obligation (including market participants’ expectations about the costs of fulfilling the obligation and the compensation that a market participant would require for taking on the obligation to dismantle the asset) if there is no reasonably available information that indicates that market participants would use different assump­ tions. That Level 3 input would be used in a present value technique together with other inputs, eg a current risk-free interest rate or a credit-adjusted risk-free rate if the effect of the entity’s credit standing on the fair value of the liability is reflected in the discount rate rather than in the estimate of future cash outflows. (e) Cash-generating unit. A Level 3 input would be a financial forecast (eg of cash flows or profit or loss) developed using the entity’s own data if there is no reasonably available information that indicates that market participants would use different assump­ tions.
+</td>
+</tr>
+</tbody>
+</table></li>
+</ol>
+<p>Une autre maniére de formater le output grace au package htmltools,</p>
+<pre class="r"><code>library(htmltools)
+library(crayon)
+for (i in 1:3) {
+  cat(&quot;\n&quot;)
+  cat(bold(paste0(&quot;Page Num :&quot;, IFRS_13$page_num[[i]])))
+  cat(&quot;\n&quot;)
+  cat(&quot;#&quot;, IFRS_13$line_text[[i]] %&gt;% stringr::str_replace(&quot;discount rate&quot;, crayon::yellow$underline(&quot;discount rate&quot;)))
+  cat(&quot;\n&quot;)
+}</code></pre>
+<p>Page Num :6
+# Present value techniques B12 Paragraphs B13–B30 describe the use of present value techniques to measure fair value. Those paragraphs focus on a discount rate adjustment technique and an expected cash flow (expected present value) technique. Those paragraphs neither prescribe the use of a single specific present value technique nor limit the use of present value techniques to measure fair value to the techniques discussed.</p>
+<p>Page Num :6
+# The present value technique used to measure fair value will depend on facts and circumstances specific to the asset or liability being measured (eg whether prices for comparable assets or liabilities can be observed in the market) and the availability of sufficient data. The components of a present value measurement B13 Present value (ie an application of the income approach) is a tool used to link future amounts (eg cash flows or values) to a present amount using a discount rate. A fair value measurement of an asset or a liability using a present value technique captures all the following elements from the perspective of market participants at the measurement date: (a) an estimate of future cash flows for the asset or liability being measured. (b) expectations about possible variations in the amount and timing of the cash flows representing the uncertainty inherent in the cash flows. (c) the time value of money, represented by the rate on risk-free monetary assets that have maturity dates or durations that coincide with the period covered by the cash flows and pose neither uncertainty in timing nor risk of default to the holder (ie a risk-free interest rate). (d) the price for bearing the uncertainty inherent in the cash flows (ie a risk premium). (e) other factors that market participants would take into account in the circumstances. (f) for a liability, the non-performance risk relating to that liability, including the entity’s (ie the obligor’s) own credit risk.</p>
+<p>Page Num :6
+# General principles B14 Present value techniques differ in how they capture the elements in paragraph B13. However, all the following general principles govern the application of any present value technique used to measure fair value: (a) Cash flows and discount rates should reflect assumptions that market participants would use when pricing the asset or liability. (b) Cash flows and discount rates should take into account only the factors attributable to the asset or liability being measured. 02008R1126 — EN — 13.10.2020 — 020.001 — 994 &lt;U+25BC&gt;M33 (c) To avoid double-counting or omitting the effects of risk factors, discount rates should reflect assumptions that are consistent with those inherent in the cash flows.</p>
+<p>Enjoy R, Enjoy IFRS</p>
+</div>
