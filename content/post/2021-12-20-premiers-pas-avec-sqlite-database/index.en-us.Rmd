@@ -75,7 +75,7 @@ On peut avoir la liste des tables dans notre base de données
 dbListTables(con) 
 ```
 
-Enumérer les champs de la table flights
+Enumérer les champs de la table flights.
 
 ```{r}
 dbListFields(con, "flights")
