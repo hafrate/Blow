@@ -1,7 +1,7 @@
 ---
 title: Premiers pas dans Sqlite database avec R
 author: 'Mohammed Hafrate'
-date: '2021-12-23'
+date: '2021-12-19'
 slug: R_sqlite
 categories: 
   - Rstat
@@ -11,7 +11,7 @@ tags: ["Rstat", "Rsqlite"]
 keywords:
   - tech
 subtitle : 'Rsqlite pour remplacer vos fichiers csv et Excel'
-summary: "Rsqlite pour remplacer vos fichiers csv et Excel pour ganger en effecience et productivité."
+summary: "Rsqlite pour remplacer vos fichiers csv et Excel et ganger en effecience et productivité."
 thumbnailImage: "/img/sqlite.png"
 thumbnailImagePosition: left
   
@@ -37,60 +37,3 @@ library(tibble)
 library(RSQLite)</code></pre>
 <pre class="r"><code>library(nycflights13)</code></pre>
 <p>first step, c’est la création d’une base de données, nommée nycflight.sqlite</p>
-<pre class="r"><code>con &lt;- dbConnect(RSQLite::SQLite(), &quot;nycflight.sqlite&quot;)</code></pre>
-<p>Ajouter des tables dans la base de données</p>
-<pre class="r"><code>dbWriteTable(con, &quot;flights&quot;, flights, overwrite = TRUE)
-dbWriteTable(con, &quot;airlines&quot;, airlines, overwrite = TRUE)</code></pre>
-<p>On peut avoir la liste des tables dans notre base de données</p>
-<pre class="r"><code>dbListTables(con)</code></pre>
-<pre><code>## [1] &quot;airlines&quot; &quot;flights&quot;</code></pre>
-<p>Enumérer les champs de la table flights</p>
-<pre class="r"><code>dbListFields(con, &quot;flights&quot;)</code></pre>
-<pre><code>##  [1] &quot;year&quot;           &quot;month&quot;          &quot;day&quot;            &quot;dep_time&quot;      
-##  [5] &quot;sched_dep_time&quot; &quot;dep_delay&quot;      &quot;arr_time&quot;       &quot;sched_arr_time&quot;
-##  [9] &quot;arr_delay&quot;      &quot;carrier&quot;        &quot;flight&quot;         &quot;tailnum&quot;       
-## [13] &quot;origin&quot;         &quot;dest&quot;           &quot;air_time&quot;       &quot;distance&quot;      
-## [17] &quot;hour&quot;           &quot;minute&quot;         &quot;time_hour&quot;</code></pre>
-<p>Exécuter un code SQL</p>
-<pre class="r"><code>dbGetQuery(con, &quot;SELECT * FROM flights LIMIT 5&quot;)</code></pre>
-<pre><code>##   year month day dep_time sched_dep_time dep_delay arr_time sched_arr_time
-## 1 2013     1   1      517            515         2      830            819
-## 2 2013     1   1      533            529         4      850            830
-## 3 2013     1   1      542            540         2      923            850
-## 4 2013     1   1      544            545        -1     1004           1022
-## 5 2013     1   1      554            600        -6      812            837
-##   arr_delay carrier flight tailnum origin dest air_time distance hour minute
-## 1        11      UA   1545  N14228    EWR  IAH      227     1400    5     15
-## 2        20      UA   1714  N24211    LGA  IAH      227     1416    5     29
-## 3        33      AA   1141  N619AA    JFK  MIA      160     1089    5     40
-## 4       -18      B6    725  N804JB    JFK  BQN      183     1576    5     45
-## 5       -25      DL    461  N668DN    LGA  ATL      116      762    6      0
-##    time_hour
-## 1 1357034400
-## 2 1357034400
-## 3 1357034400
-## 4 1357034400
-## 5 1357038000</code></pre>
-<p>Pour manipuler les données avec dplyr, on doit créer un</p>
-<pre class="r"><code>flights_db &lt;- tbl(con, &quot;flights&quot;)</code></pre>
-<pre class="r"><code>flights_db %&gt;%
-  select(carrier, arr_delay) %&gt;%
-  group_by(carrier) %&gt;%
-  mutate(MinDelai = min(arr_delay, na.rm = TRUE))</code></pre>
-<pre><code>## # Source:   lazy query [?? x 3]
-## # Database: sqlite 3.34.1
-## #   [D:\Rproject\Blow\content\post\2021-12-20-premiers-pas-avec-sqlite-database\nycflight.sqlite]
-## # Groups:   carrier
-##    carrier arr_delay MinDelai
-##    &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt;
-##  1 9E             11      -68
-##  2 9E             -2      -68
-##  3 9E             -2      -68
-##  4 9E             -1      -68
-##  5 9E             -5      -68
-##  6 9E             -5      -68
-##  7 9E              5      -68
-##  8 9E             13      -68
-##  9 9E             -8      -68
-## 10 9E            -33      -68
-## # ... with more rows</code></pre>

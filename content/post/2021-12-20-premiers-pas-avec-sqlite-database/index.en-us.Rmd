@@ -11,7 +11,7 @@ tags: ["Rstat", "Rsqlite"]
 keywords:
   - tech
 subtitle : 'Rsqlite pour remplacer vos fichiers csv et Excel'
-summary: "Rsqlite pour remplacer vos fichiers csv et Excel pour ganger en effecience et productivité."
+summary: "Rsqlite pour remplacer vos fichiers csv et Excel et ganger en effecience et productivité."
 thumbnailImage: "/img/sqlite.png"
 thumbnailImagePosition: left
   

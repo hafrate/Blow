@@ -24,7 +24,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, tidy = "sty
 Je travaille dans le reporting et analyse de l'informations comptable et financiére, et pour tous les personnes qui travaillent dans ce domaine, sachent que nous nous appuyons
 principalement sur des feuilles Excel et des fichiers CSV pour nos besoins de stockage de données. 
 
-Ansi, Au fur et à mesure que le nombre de fichiers Excel et CSV augmente, la gestion de ceux-ci devient un véritable challenge. 
+Ansi, Au fur et à mesure que le nombre de fichiers Excel et CSV augmente, la gestion de ceux-ci devient un véritable challenge.  
 
 Pour de tels scénarios, disposer d'un logiciel de base de données semble être une solution appropriée. Mais, en raison de facteurs tels que le coût et le délai de mise en service, et aussi d"appétence pour le SQL,*cette solution prend du recul*.
 

@@ -1,7 +1,7 @@
 ---
-title: Sqlite avec R - Premiers pas
+title: Sqlite avec R - Premiers pas dans database
 author: 'Mohammed Hafrate'
-date: '2021-12-23'
+date: '2021-12-19'
 slug: R_sqlite
 categories: 
   - Rstat
@@ -37,7 +37,7 @@ library(tibble)
 library(RSQLite)</code></pre>
 <pre class="r"><code>library(nycflights13)</code></pre>
 <p>first step, c’est la création d’une base de données, nommée nycflight.sqlite</p>
-<pre class="r"><code>con &lt;- dbConnect(RSQLite::SQLite(), &quot;nycflight.sqlite&quot;)</code></pre>
+<pre class="r"><code>con &lt;- dbConnect(RSQLite::SQLite(), &quot;:memory:&quot;)</code></pre>
 <p>Ajouter des tables dans la base de données</p>
 <pre class="r"><code>dbWriteTable(con, &quot;flights&quot;, flights, overwrite = TRUE)
 dbWriteTable(con, &quot;airlines&quot;, airlines, overwrite = TRUE)</code></pre>
@@ -78,8 +78,7 @@ dbWriteTable(con, &quot;airlines&quot;, airlines, overwrite = TRUE)</code></pre>
   group_by(carrier) %&gt;%
   mutate(MinDelai = min(arr_delay, na.rm = TRUE))</code></pre>
 <pre><code>## # Source:   lazy query [?? x 3]
-## # Database: sqlite 3.34.1
-## #   [D:\Rproject\Blow\content\post\2021-12-20-sqlite-avec-r-premiers-pas\nycflight.sqlite]
+## # Database: sqlite 3.34.1 [:memory:]
 ## # Groups:   carrier
 ##    carrier arr_delay MinDelai
 ##    &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt;
