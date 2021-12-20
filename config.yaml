@@ -5,7 +5,7 @@ title: Finance - Data Science Blog
 theme: hugo-tranquilpeak-theme
 disqusShortname: hugo-tranquilpeak-theme
 paginate: 7
-ignoreFiles : ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
+ignoreFiles : ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$", "\\.sqlite$"]
 canonifyurls: yes
 
 permalinks:

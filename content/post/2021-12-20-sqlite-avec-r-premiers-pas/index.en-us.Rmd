@@ -1,5 +1,5 @@
 ---
-title: Sqlite avec R - Premiers pas
+title: Sqlite avec R - Premiers pas dans database
 author: 'Mohammed Hafrate'
 date: '2021-12-23'
 slug: R_sqlite
