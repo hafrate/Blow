@@ -58,7 +58,7 @@ library(nycflights13)
 first step, c'est la création d'une base de données, nommée nycflight.sqlite
 
 ```{r}
-con <- dbConnect(RSQLite::SQLite(), "nycflight.sqlite")
+con <- dbConnect(RSQLite::SQLite(), ":memory:")
 ```
 
 Ajouter des tables dans la base de données
