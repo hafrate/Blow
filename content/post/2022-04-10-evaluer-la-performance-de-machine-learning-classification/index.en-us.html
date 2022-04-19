@@ -3,14 +3,9 @@ title: Prévision de défaut du paiement avec Xgboost
 author: 'Mohammed Hafrate'
 date: '2022-04-10'
 categories: 
-   - Power query
-   - ODBC
-   - Sqlite
-   - Power BI
-tags: ["Sqlite", "ODBC", "Power BI"]
-
-summary: "Step by step du framework tidymodel pour prévoir les Client avec un défault de paiement par un modèle de classification 'Xgboost)"
-thumbnailImage: "/img/DAX/sqlite_bi.png"
+tags: ["XGboost", "tidyModel", "Tuning", "AUC", "ROC"]
+summary: "Step by step Tuto  pour prévoir les Client avec un défault de paiement par un modèle de classification Xgboost avec tidymodel"
+thumbnailImage: "/img/DAX/density.PNG"
 thumbnailImagePosition: left
 ---
 
@@ -26,8 +21,7 @@ thumbnailImagePosition: left
 <script src="/rmarkdown-libs/crosstalk/js/crosstalk.min.js"></script>
 
 
-<p>Dans ce post, nous allons entraîner et le régler les hyperparamètres du modèle XGBoost.
-On va utiliser le package <strong>tidymodels</strong>, qui se compose de plusieurs library, un workflow pour entrainer les models de classification (ou régression) :</p>
+<p>Dans ce post, nous allons entraîner et régler les hyperparamètres du modèle XGBoost. On va utiliser le package <strong>tidymodels</strong>, qui se compose de plusieurs library, un workflow pour entrainer un modèle de classification:</p>
 <ul>
 <li><strong>recipes</strong> : framework pour le Preprocessing</li>
 <li><strong>rsample</strong> : Cross Validation et sample</li>
@@ -322,10 +316,8 @@ test_data &lt;- testing(split)</code></pre>
 </div>
 <div id="preprocessing" class="section level1">
 <h1>Preprocessing</h1>
-<p>Le prétraitement modifie les données pour rendre notre modèle plus prédictif et le processus de formation moins intensif. De nombreux modèles nécessitent un prétraitement minutieux et exhaustif des variables pour produire des prévisions précises.
-XGBoost, cependant, est robuste contre les données fortement asymétriques et/ou corrélées. Néanmoins, nous pouvons encore bénéficier d’un certain prétraitement</p>
-<p>Dans tidymodels, nous utilisons <strong>recipes</strong> pour définir ces étapes de prétraitement.
-Le preprocessing a été déini au départ pour entrainer le modéle <strong>Catboost</strong></p>
+<p>Le prétraitement modifie les données pour rendre notre modèle plus prédictif et le processus de formation moins intensif. De nombreux modèles nécessitent un prétraitement minutieux et exhaustif des variables pour produire des prévisions précises. XGBoost, cependant, est robuste contre les données fortement asymétriques et/ou corrélées. Néanmoins, nous pouvons encore bénéficier d’un certain prétraitement</p>
+<p>Dans tidymodels, nous utilisons <strong>recipes</strong> pour définir ces étapes de prétraitement. Le preprocessing a été déini au départ pour entrainer le modéle <strong>LightGBM</strong></p>
 <pre class="r"><code>recipe_credit &lt;- train_data %&gt;%
   recipe(Status ~ .) %&gt;%
   step_unknown(all_nominal(), -Status) %&gt;%
@@ -376,11 +368,10 @@ cv_fold</code></pre>
 </div>
 <div id="specifications-du-modéle-xgboost" class="section level1">
 <h1>Specifications du modéle XGboost</h1>
-<p>On utilise le package <strong>parsnip</strong> pour définir la spécification du modèle. Parsnip permet d’accéder à plusieurs packages d’apprentissage automatique
-les 3 étapes:
-1- définir le type du modèle à entrainer
-2- Décider quel moteur (engine) de calcul à utiliser
-3- définir le mode “classification”</p>
+<p>On utilise le package <strong>parsnip</strong> pour définir la spécification du modèle. Parsnip permet d’accéder à plusieurs packages d’apprentissage automatique les 3 étapes:</p>
+<p>1- définir le type du modèle à entrainer</p>
+<p>2- Décider quel moteur (engine) de calcul à utiliser</p>
+<p>3- définir le mode “classification”</p>
 <pre class="r"><code>xgb_spec &lt;- boost_tree(
   trees = tune(),
   tree_depth = tune(), min_n = tune(),
@@ -492,7 +483,7 @@ xgb_tune &lt;- tune_grid(
   control = control_grid(verbose = FALSE, save_pred = TRUE)
 )
 toc()</code></pre>
-<pre><code>## 112.37 sec elapsed</code></pre>
+<pre><code>## 108.1 sec elapsed</code></pre>
 <pre class="r"><code>xgb_tune</code></pre>
 <pre><code>## # Tuning results
 ## # 5-fold cross-validation using stratification 
@@ -511,7 +502,8 @@ toc()</code></pre>
 <pre class="r"><code>DT::datatable(xgb_tune %&gt;% collect_metrics())</code></pre>
 <div id="htmlwidget-1" style="width:100%;height:auto;" class="datatables html-widget"></div>
 <script type="application/json" data-for="htmlwidget-1">{"x":{"filter":"none","data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"],[3,3,6,6,10,10,14,14,17,17,20,20,22,22,27,27,28,28,31,31],[1181,1181,883,883,287,287,1337,1337,1610,1610,41,41,507,507,1421,1421,1974,1974,740,740],[40,40,24,24,5,5,19,19,26,26,30,30,33,33,8,8,12,12,14,14],[2,2,4,4,14,14,13,13,11,11,3,3,7,7,6,6,10,10,9,9],[8.02377043073099e-05,8.02377043073099e-05,1.2435466264682e-05,1.2435466264682e-05,0.000404816798049221,0.000404816798049221,2.24300942783867e-09,2.24300942783867e-09,1.70416557080184e-08,1.70416557080184e-08,1.28066773715271e-10,1.28066773715271e-10,1.69895537835174e-07,1.69895537835174e-07,2.16892439743488e-06,2.16892439743488e-06,0.00186543087688527,0.00186543087688527,0.0219522598096763,0.0219522598096763],[0.000448893943666499,0.000448893943666499,4.80573446135499e-07,4.80573446135499e-07,5.58499676131176e-05,5.58499676131176e-05,7.29853578537967e-09,7.29853578537967e-09,0.00720916775148463,0.00720916775148463,0.459451892828406,0.459451892828406,6.72878805489228,6.72878805489228,1.79411355234453e-07,1.79411355234453e-07,0.0457608661720508,0.0457608661720508,1.97285876810347e-10,1.97285876810347e-10],[0.954286925869528,0.954286925869528,0.874900537792128,0.874900537792128,0.166154133419041,0.166154133419041,0.28297191669466,0.28297191669466,0.485309436372481,0.485309436372481,0.273012227267027,0.273012227267027,0.371744053668808,0.371744053668808,0.668872081837617,0.668872081837617,0.798497312848922,0.798497312848922,0.584601337143686,0.584601337143686],["accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc"],["binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary"],[0.718495989410152,0.825306023592973,0.729161873394582,0.83565573499689,0.750774934207416,0.836728267840485,0.734215689364451,0.822317441114739,0.767332603180106,0.821077833488806,0.718495989410152,0.5,0.744599098602203,0.803948300489739,0.782487747608617,0.826758764769901,0.79287352065178,0.846837088969216,0.795403186409695,0.84251710684857],[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],[0.000247044996671956,0.0040896035043811,0.00110765920901901,0.00417827294038208,0.00237346591384804,0.0042707482963975,0.00272013437732519,0.00497323477766941,0.00289002938350012,0.00552514235422377,0.000247044996671956,0,0.00367835761180872,0.00661699691530423,0.0049480729859884,0.00627830099475549,0.00298731568947198,0.00594816333625281,0.00749281838471937,0.00530647576925432],["Preprocessor1_Model01","Preprocessor1_Model01","Preprocessor1_Model02","Preprocessor1_Model02","Preprocessor1_Model03","Preprocessor1_Model03","Preprocessor1_Model04","Preprocessor1_Model04","Preprocessor1_Model05","Preprocessor1_Model05","Preprocessor1_Model06","Preprocessor1_Model06","Preprocessor1_Model07","Preprocessor1_Model07","Preprocessor1_Model08","Preprocessor1_Model08","Preprocessor1_Model09","Preprocessor1_Model09","Preprocessor1_Model10","Preprocessor1_Model10"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>mtry<\/th>\n      <th>trees<\/th>\n      <th>min_n<\/th>\n      <th>tree_depth<\/th>\n      <th>learn_rate<\/th>\n      <th>loss_reduction<\/th>\n      <th>sample_size<\/th>\n      <th>.metric<\/th>\n      <th>.estimator<\/th>\n      <th>mean<\/th>\n      <th>n<\/th>\n      <th>std_err<\/th>\n      <th>.config<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[1,2,3,4,5,6,7,10,11,12]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
-<p>ROC curve + gain curve</p>
+<div id="roc-curve-vs-gain-curve" class="section level4">
+<h4>ROC curve vs gain curve</h4>
 <pre class="r"><code>library(patchwork)
 
 p1 &lt;- xgb_tune %&gt;%
@@ -529,8 +521,8 @@ p2 &lt;- xgb_tune %&gt;%
 # p1 / p2
 p1 + p2</code></pre>
 <p><img src="/post/2022-04-10-evaluer-la-performance-de-machine-learning-classification/index.en-us_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
-<p>Quels sont les combinaisons de paramètres les plus performants?
-Et, Finaliser le modèle XGBoost avec les meilleurs paramètres.</p>
+<p>Quels sont les combinaisons de paramètres les plus performants?</p>
+<p>Et aprés, finaliser le modèle XGBoost avec les meilleurs paramètres.</p>
 <pre class="r"><code>xgb_best &lt;- select_best(xgb_tune, &quot;roc_auc&quot;)
 xgb_final_wf &lt;- finalize_workflow(xgb_wf, xgb_best)
 xgb_best</code></pre>
@@ -565,14 +557,14 @@ xgb_best</code></pre>
 ## 20    31   740    14          9   2.20e- 2       1.97e-10       0.585 roc_auc 
 ## # ... with 5 more variables: .estimator &lt;chr&gt;, mean &lt;dbl&gt;, n &lt;int&gt;,
 ## #   std_err &lt;dbl&gt;, .config &lt;chr&gt;</code></pre>
-<p>What are the most important parameters for variable importance?</p>
+<p>Déterminer les paramètres les plus importants</p>
 <pre class="r"><code>library(vip)
 
 xgb_final_wf %&gt;%
   fit(data = train_data) %&gt;%
   pull_workflow_fit() %&gt;%
   vip(geom = &quot;point&quot;)</code></pre>
-<pre><code>## [22:20:18] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective &#39;binary:logistic&#39; was changed from &#39;error&#39; to &#39;logloss&#39;. Explicitly set eval_metric if you&#39;d like to restore the old behavior.</code></pre>
+<pre><code>## [22:34:34] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective &#39;binary:logistic&#39; was changed from &#39;error&#39; to &#39;logloss&#39;. Explicitly set eval_metric if you&#39;d like to restore the old behavior.</code></pre>
 <p><img src="/post/2022-04-10-evaluer-la-performance-de-machine-learning-classification/index.en-us_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
 <p>last_fit() pour adapter notre modèle une dernière fois sur les données de validation et évaluer notre modèle sur les données de tests</p>
 <pre class="r"><code>xgb_final &lt;- xgb_final_wf %&gt;%
@@ -586,7 +578,7 @@ xgb_final %&gt;% collect_metrics()</code></pre>
 ## 3 spec     binary         0.928 Preprocessor1_Model1
 ## 4 accuracy binary         0.802 Preprocessor1_Model1
 ## 5 roc_auc  binary         0.847 Preprocessor1_Model1</code></pre>
-<p>La courbe ROC nous donnera une idée de la performance de notre modèle avec les données tests. Vous devriez savoir maintenant que si AUC (Area Under Curve) est proche de 50%, alors le modèle est aussi bon qu’un sélection aléatoire; par contre, si AUC est proche de 100%, vous avez un «modèle parfait»</p>
+<p>La courbe ROC nous donnera une idée de la performance de notre modèle avec les données tests. Vous devriez savoir que si AUC (Area Under Curve) est proche de 50%, alors le modèle est aussi bon qu’un sélection aléatoire; par contre, si AUC est proche de 100%, vous avez un «modèle parfait»</p>
 <pre class="r"><code>xgb_final %&gt;%
   collect_predictions() %&gt;%
   roc_curve(Status, .pred_bad) %&gt;%
@@ -603,8 +595,8 @@ xgb_final %&gt;% collect_metrics()</code></pre>
   coord_equal() +
   # scale_color_viridis_d(option = &quot;plasma&quot;, end = .6)+
   theme_bw()</code></pre>
-<p><img src="/post/2022-04-10-evaluer-la-performance-de-machine-learning-classification/index.en-us_files/figure-html/unnamed-chunk-18-2.png" width="672" />
-Analyse de la densité pour chaque classe vs prévision, ce graphe permet de fournir des informations visuelles sur l’asymétrie, la distribution, et la qualité de prévision de notre modèle.</p>
+<p><img src="/post/2022-04-10-evaluer-la-performance-de-machine-learning-classification/index.en-us_files/figure-html/unnamed-chunk-18-2.png" width="672" /></p>
+<p>Analyse de la densité pour chaque classe vs prévision, ce graphe permet de fournir des informations visuelles sur l’asymétrie, la distribution, et la qualité de prévision de notre modèle.</p>
 <pre class="r"><code>xgb_auc &lt;- xgb_final %&gt;% collect_predictions()
 h1 &lt;- xgb_auc %&gt;%
   ggplot() +
@@ -617,4 +609,5 @@ h2 &lt;- xgb_auc %&gt;%
 h1 / h2</code></pre>
 <p><img src="/post/2022-04-10-evaluer-la-performance-de-machine-learning-classification/index.en-us_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
 <p>La performance du modèle XGboost n’est aussi pas optimale qu’attendue…Il faut revoir le process, peut-être en incrémentant d’autres données, revoir notre stratégie du tuning et du preprocessing, chnager le thresholds ou changer le modèle comme le Catboost ou LightGBM ; il y a toujours des pistes 😊</p>
+</div>
 </div>

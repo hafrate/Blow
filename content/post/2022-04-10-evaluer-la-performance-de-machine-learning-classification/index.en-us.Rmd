@@ -3,31 +3,25 @@ title: Prévision de défaut du paiement avec Xgboost
 author: 'Mohammed Hafrate'
 date: '2022-04-10'
 categories: 
-   - Power query
-   - ODBC
-   - Sqlite
-   - Power BI
-tags: ["Sqlite", "ODBC", "Power BI"]
-
-summary: "Step by step du framework tidymodel pour prévoir les Client avec un défault de paiement par un modèle de classification 'Xgboost)"
-thumbnailImage: "/img/DAX/sqlite_bi.png"
+tags: ["XGboost", "tidyModel", "Tuning", "AUC", "ROC"]
+summary: "Step by step Tuto  pour prévoir les Client avec un défault de paiement par un modèle de classification Xgboost avec tidymodel"
+thumbnailImage: "/img/DAX/density.PNG"
 thumbnailImagePosition: left
 ---
-  
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, tidy = "styler")
 ```
 
-Dans ce post, nous allons entraîner et le régler les hyperparamètres du modèle XGBoost.
-On va utiliser le package **tidymodels**, qui se compose de plusieurs library, un workflow pour entrainer les models de classification (ou régression) :
-  
-  - **recipes** : framework pour le Preprocessing
-- **rsample** : Cross Validation et sample 
-- **parsnip** : framework de train des Machines Learnings
-- **tune** : Tuning des hyperparamètres
-- **yardstick** : evaluation sur les données Test
+Dans ce post, nous allons entraîner et régler les hyperparamètres du modèle XGBoost. On va utiliser le package **tidymodels**, qui se compose de plusieurs library, un workflow pour entrainer un modèle de classification:
 
-Ce projet consiste à construire la meilleure fonction score possible sur une base de données classique en machine learning : la base Credit Data disponible dane le package *modeldata*. 
+-   **recipes** : framework pour le Preprocessing
+-   **rsample** : Cross Validation et sample
+-   **parsnip** : framework de train des Machines Learnings
+-   **tune** : Tuning des hyperparamètres
+-   **yardstick** : evaluation sur les données Test
+
+Ce projet consiste à construire la meilleure fonction score possible sur une base de données classique en machine learning : la base Credit Data disponible dane le package *modeldata*.
 
 Load packages necessaires
 
@@ -47,7 +41,6 @@ library(vip)
 library(doParallel)
 ```
 
-
 ## Load les données
 
 ```{r}
@@ -64,8 +57,8 @@ skim(credit_data)
 ```
 
 # Splitting -- la répartition des données
-Maintenant, on divise les données en données de validation et de test. Les données de validation sont utilisées pour l'entrainement du modèle et l’ajustement des hyperparamètres. Une fois le modèle construit, il peut être évalué par rapport aux données test pour évaluer la qualité et la précision du nouveau modèle.
 
+Maintenant, on divise les données en données de validation et de test. Les données de validation sont utilisées pour l'entrainement du modèle et l'ajustement des hyperparamètres. Une fois le modèle construit, il peut être évalué par rapport aux données test pour évaluer la qualité et la précision du nouveau modèle.
 
 ```{r}
 split <- initial_split(credit_data, prop = 0.8, strata = Status)
@@ -75,12 +68,10 @@ test_data <-  testing(split)
 ```
 
 # Preprocessing
-Le prétraitement modifie les données pour rendre notre modèle plus prédictif et le processus de formation moins intensif. De nombreux modèles nécessitent un prétraitement minutieux et exhaustif des variables pour produire des prévisions précises.
-XGBoost, cependant, est robuste contre les données fortement asymétriques et/ou corrélées. Néanmoins, nous pouvons encore bénéficier d’un certain prétraitement 
 
-Dans tidymodels, nous utilisons **recipes** pour définir ces étapes de prétraitement.
-Le preprocessing a été déini au départ pour entrainer le modéle **Catboost**
+Le prétraitement modifie les données pour rendre notre modèle plus prédictif et le processus de formation moins intensif. De nombreux modèles nécessitent un prétraitement minutieux et exhaustif des variables pour produire des prévisions précises. XGBoost, cependant, est robuste contre les données fortement asymétriques et/ou corrélées. Néanmoins, nous pouvons encore bénéficier d'un certain prétraitement
 
+Dans tidymodels, nous utilisons **recipes** pour définir ces étapes de prétraitement. Le preprocessing a été déini au départ pour entrainer le modéle **LightGBM**
 
 ```{r}
 recipe_credit <- train_data %>% recipe(Status ~ .) %>% 
@@ -107,11 +98,14 @@ cv_fold
 ```
 
 # Specifications du modéle XGboost
-On utilise le package **parsnip** pour définir la spécification du modèle. Parsnip permet d’accéder à plusieurs packages d’apprentissage automatique
-les 3 étapes:
-  1- définir le type du modèle à entrainer 
-  2- Décider quel moteur (engine) de calcul à utiliser
-  3- définir le mode "classification"
+
+On utilise le package **parsnip** pour définir la spécification du modèle. Parsnip permet d'accéder à plusieurs packages d'apprentissage automatique les 3 étapes:
+
+1- définir le type du modèle à entrainer
+
+2- Décider quel moteur (engine) de calcul à utiliser
+
+3- définir le mode "classification"
 
 ```{r}
 xgb_spec <- boost_tree( trees = tune(),
@@ -125,7 +119,9 @@ xgb_spec %>%  translate ()
 ```
 
 #### Grid specification
-On va utiliser `grid_latin_hypercube` afin que nous puissions couvrir l’espace des hyperparamètres le mieux possible
+
+On va utiliser `grid_latin_hypercube` afin que nous puissions couvrir l'espace des hyperparamètres le mieux possible
+
 ```{r}
 xgb_grid <- grid_latin_hypercube ( 
         trees(),
@@ -151,7 +147,8 @@ xgb_wf
 ```
 
 # Tune des hyperparamètres
-Pour accélérer le calcul, on utilise paralell processing. Pour en savoir plus https://curso-r.github.io/treesnip/articles/parallel-processing.html
+
+Pour accélérer le calcul, on utilise paralell processing. Pour en savoir plus <https://curso-r.github.io/treesnip/articles/parallel-processing.html>
 
 ```{r}
 all_cores <- parallel::detectCores(logical = FALSE)
@@ -163,6 +160,7 @@ cat("Nombre de cores :" , all_cores)
 ```
 
 Le tuning prends un peu de temps pour évaluer l'ensemble des paramétres.
+
 ```{r}
 tic()
 xgb_tune <- tune_grid(
@@ -175,12 +173,14 @@ xgb_tune
 ```
 
 # Evaluer le Résultat
+
 On va sortir les paramètres de tous ces modèles.
+
 ```{r}
 DT::datatable(xgb_tune%>% collect_metrics( ))
 ```
 
-ROC curve + gain curve
+#### ROC curve vs  gain curve
 
 ```{r}
 library(patchwork)
@@ -201,7 +201,8 @@ p1 + p2
 ```
 
 Quels sont les combinaisons de paramètres les plus performants?
-Et, Finaliser le modèle XGBoost avec les meilleurs paramètres.
+
+Et aprés, finaliser le modèle XGBoost avec les meilleurs paramètres.
 
 ```{r}
 xgb_best <-	select_best(xgb_tune, "roc_auc")
@@ -209,15 +210,13 @@ xgb_final_wf <- finalize_workflow(xgb_wf, xgb_best)
 xgb_best
 ```
 
-
 ```{r}
 xgb_tune%>% 
   collect_metrics(parameters = xgb_best)
 ```
 
+Déterminer les paramètres les plus importants
 
-What are the most important parameters for variable importance?
-  
 ```{r}
 library(vip)
 
@@ -227,7 +226,6 @@ xgb_final_wf %>%
   vip(geom = "point")
 ```
 
-
 last_fit() pour adapter notre modèle une dernière fois sur les données de validation et évaluer notre modèle sur les données de tests
 
 ```{r}
@@ -236,7 +234,7 @@ xgb_final<- xgb_final_wf %>%
 xgb_final %>%  collect_metrics()
 ```
 
-La courbe ROC nous donnera une idée de la performance de notre modèle avec les données tests. Vous devriez savoir maintenant que si AUC (Area Under Curve) est proche de 50%, alors le modèle est aussi bon qu’un sélection aléatoire; par contre, si AUC est proche de 100%, vous avez un «modèle parfait»
+La courbe ROC nous donnera une idée de la performance de notre modèle avec les données tests. Vous devriez savoir que si AUC (Area Under Curve) est proche de 50%, alors le modèle est aussi bon qu'un sélection aléatoire; par contre, si AUC est proche de 100%, vous avez un «modèle parfait»
 
 ```{r}
 xgb_final %>%
@@ -256,7 +254,9 @@ xgb_final %>%
   #scale_color_viridis_d(option = "plasma", end = .6)+
    theme_bw()
 ```
-Analyse de la densité pour chaque classe  vs prévision, ce graphe permet de fournir des informations visuelles sur l’asymétrie, la distribution, et la qualité de prévision de notre modèle.
+
+Analyse de la densité pour chaque classe vs prévision, ce graphe permet de fournir des informations visuelles sur l'asymétrie, la distribution, et la qualité de prévision de notre modèle.
+
 ```{r}
 xgb_auc <- xgb_final%>%collect_predictions()
 h1 <- xgb_auc %>% 
@@ -268,4 +268,4 @@ h2 <- xgb_auc %>%
 h1/h2
 ```
 
-La performance du modèle XGboost n'est aussi pas optimale qu’attendue...Il faut revoir le process, peut-être en incrémentant d'autres données, revoir notre stratégie du tuning et du preprocessing, chnager le thresholds ou changer le modèle comme le Catboost ou LightGBM ; il y a toujours des pistes 😊
+La performance du modèle XGboost n'est aussi pas optimale qu'attendue...Il faut revoir le process, peut-être en incrémentant d'autres données, revoir notre stratégie du tuning et du preprocessing, chnager le thresholds ou changer le modèle comme le Catboost ou LightGBM ; il y a toujours des pistes 😊
