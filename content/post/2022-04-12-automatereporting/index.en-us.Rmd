@@ -4,12 +4,12 @@ author: 'Mohammed Hafrate'
 date: '2022-04-12'
 slug: automateReporting
 categories: []
-tags: []
+tags: ["Reporting", "Finane", "Rmarkdown", "RPA"]
 keywords:
   - tech
 subtitle: 
 summary: "Produire des Reportings Automatisés avec R Markdown"
-thumbnailImage: "/img/DAX/flow_finance.png"
+thumbnailImage: "/img/DAX/reporting-automation.png"
 thumbnailImagePosition: left
 ---
 
