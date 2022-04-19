@@ -1,0 +1,136 @@
+---
+title: Application EDA dans le Audit Data Analytics  (ADA)
+author: ''
+date: '2022-04-11'
+slug: EDA_Audit
+categories: []
+tags: ["Audit", "Analytique", "Finance", "EDA", "ADA"]
+keywords:
+  - tech
+summary: "Exploration des données (EDA) au Service de l'audit"
+thumbnailImage: "/img/DAX/ada.PNG"
+thumbnailImagePosition: left
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, tidy = "styler")
+```
+
+Les nouvelles méthodes Analytique viennent bouleverser l'organisation
+des entreprises et le métier de l'audit n'est pas épargnée par ces
+changements. Ainsi, Data Analytics permettent d'analyser d'importantes
+quantités de données lors d'un audit des états financiers à l'aide de
+logiciels souvent open source, comme R ou Python.
+
+> L'Audit Data Analytics ou Analyse des Données en Audit (ADA) se
+> définit comme « la science et l'art de découvrir et d'analyser des
+> modèles, d'identifier les anomalies et d'extraire d'autres
+> informations utiles dans les données sous-jacentes ou liées à l'objet
+> d'un audit par l'analyse, la modélisation et la visualisation de la
+> planification ou de l'exécution de l'audit ».
+
+Les ADA sont pertinentes dans toutes les phases de l'audit. La technique
+du DA peut s'appliquer, en fonction du jugement professionnel de
+l'auditeur, à chaque étape de l'audit, à savoir aussi bien lors :
+
+• De la planification de l'audit ;
+
+• Des tests de procédures ;
+
+• Des contrôles de substance ;
+
+• De l'évaluation des résultats.
+
+**Exploration des Données Analysées** (EDA) va permettre à l'auditeur
+analyser de façon exhaustive les transactions, il lui est possible
+d'obtenir des indicateurs sur le risque d'anomalies significatives.
+
+> EDA ou L'Exploration des Données Analysées est une technique assimilée
+> au DA qui consiste en une approche d'analyse d'un ensemble de données
+> afin de résumer les principales caractéristiques, à l'aide d'une
+> méthode visuelle et des résumés statistiques. De cette manière,
+> l'auditeur peut se faire une première idée générale des informations
+> contenues dans les données, dans le but d'obtenir les renseignements
+> préliminaires liés à ces données.
+
+L'EDA permet à l'auditeur de :
+
+• Mieux comprendre l'entité auditée ;
+
+• Identifier les risques d'anomalies éventuelles ;
+
+• Influencer l'audit afin de se concentrer davantage sur les zones à
+risque.
+
+Pour en savoir plus :
+
+-   Aicpa, [Audit Data Analytics avec
+    Python](https://us.aicpa.org/interestareas/frc/assuranceadvisoryservices/auditdatastandards),
+
+```{=html}
+<!-- -->
+```
+-   Universalcpar: [C'est quoi ADA
+    ?](https://www.universalcpareview.com/ask-joey/what-is-audit-data-analytics-ada/)-
+
+```{=html}
+<!-- -->
+```
+-   Rutgers : [Application EDA dans
+    l'audit](http://raw.rutgers.edu/docs/wcars/28wcars/28wcars%20presentations/Qi%20Liu_28wcars.pdf),
+
+#### Application EDA à l'aide package summarytools
+
+```{r}
+library(summarytools)
+library(tidyverse)
+```
+
+```{r echo=FALSE}
+library(readr)
+X18_12_2015 <- read_delim("D:/Disk dur Extern/A data/CSV/18-12-2015.csv",
+    ";", locale=locale(decimal_mark = ","), escape_double = FALSE, col_names = FALSE, 
+    col_types = cols(X1 = col_character()), 
+    trim_ws = TRUE)
+data <- X18_12_2015%>%filter(X12 < 2000)
+```
+
+```{r}
+data %>% glimpse()
+```
+
+#### Réalisation d'une table descriptive,
+
+```{r}
+library(summarytools)
+print(dfSummary(data%>%select(5:14), graph.magnif = .7), method= "render")
+```
+
+#### Réalisation d'une table de contingence
+
+```{r}
+(data_by_X5 <- stby(data = data, 
+                               INDICES   = data$X5, 
+                               FUN       = descr, 
+                               stats     = "common", 
+                               transpose = TRUE))
+```
+
+##### Data Explorer
+
+```{r, fig.dim = c(18, 6)}
+library(DataExplorer)
+plot_bar(data, ncol=3, nrow = 1)
+```
+
+```{r}
+plot_bar(data, ncol=2, nrow = 1, by = "X5")
+```
+
+```{r}
+#plot_histogram(X18_12_2015, ncol=3, nrow = 1, geom_histogram_args = list(bins = 10L),)
+plot_boxplot(data, by = "X5") 
+```

@@ -1,0 +1,39 @@
+---
+title: Prévision des séries chronologique - Décomposition
+author: 'Mohammed Hafrate'
+date: '2022-04-11'
+categories: 
+   - Power query
+   - ODBC
+   - Forecast
+   - Power BI
+tags: ["Sqlite", "ODBC", "Power BI"]
+
+summary: "Métriques d'évaluation pour les modèles de classification"
+thumbnailImage: "/img/DAX/sqlite_bi.png"
+thumbnailImagePosition: left
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<p><a href="https://github.com/KaroRonty/StockMarketLongTermForecast/blob/master/StockMarketTimeSeries.R" class="uri">https://github.com/KaroRonty/StockMarketLongTermForecast/blob/master/StockMarketTimeSeries.R</a></p>
+<p>This is an <a href="http://rmarkdown.rstudio.com">R Markdown</a> Notebook. When you execute code within the notebook, the results appear beneath the code.</p>
+<p>Try executing this chunk by clicking the <em>Run</em> button within the chunk or by placing your cursor inside it and pressing <em>Ctrl+Shift+Enter</em>.</p>
+<pre class="r"><code>library(tidyverse)
+library(sweep)
+library(timetk)
+library(lubridate)
+library(gridExtra)</code></pre>
+<pre class="r"><code>data(&quot;bike_sales&quot;)
+bike &lt;- bike_sales %&gt;%
+  mutate(order.date = as_date(zoo::as.yearmon(order.date))) %&gt;%
+  group_by(order.date, category.secondary) %&gt;%
+  summarise(qty = sum(quantity))</code></pre>
+<pre class="r"><code>bike %&gt;%
+  ggplot(aes(order.date, qty), group = category.secondary) +
+  geom_line(aes(color = category.secondary))</code></pre>
+<p><img src="/post/2022-04-11-decoposition-ts/index.fr-fr_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>

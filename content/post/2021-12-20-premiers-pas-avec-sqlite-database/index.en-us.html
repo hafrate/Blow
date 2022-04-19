@@ -7,33 +7,229 @@ categories:
   - Rstat
   - Database
   - Sqlite
-tags: ["Rstat", "Rsqlite"]
+tags: ["Rstat", "Rsqlite", "ODBC", "dplyr", "Database"]
 keywords:
   - tech
-subtitle : 'Rsqlite pour remplacer vos fichiers csv et Excel'
+subtitle : 'Manipuler les base de données depuis Rstudio'
 summary: "Rsqlite pour remplacer vos fichiers csv et Excel et ganger en effecience et productivité."
 thumbnailImage: "/img/sqlite.png"
 thumbnailImagePosition: left
-  
 ---
 
 <script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
-<p>Je travaille dans le reporting et analyse de l’informations comptable et financiére, et pour tous les personnes qui travaillent dans ce domaine, sachent que nous nous appuyons
-principalement sur des feuilles Excel et des fichiers CSV pour nos besoins de stockage de données.</p>
-<p>Ansi, Au fur et à mesure que le nombre de fichiers Excel et CSV augmente, la gestion de ceux-ci devient un véritable challenge.</p>
-<p>Pour de tels scénarios, disposer d’un logiciel de base de données semble être une solution appropriée. Mais, en raison de facteurs tels que le coût et le délai de mise en service, et aussi d"appétence pour le SQL,<em>cette solution prend du recul</em>.</p>
-<p>La solution, c’est de disposer d’une database local et gratuite, <em>Sqlite</em>. L’intérêt c’est que c’est très léger et rapide à mettre en place, on peut s’en servir aussi bien pour stocker des données dans comme une vraie base de données commme les balances, GL, ventes, extraction… Avec l’avanatage de créer plusieurs Tables et y accéder facilement.</p>
+<p>Au fur et à mesure que le nombre de fichiers Excel et CSV augmente, la gestion de ceux-ci devient un véritable challenge.</p>
+<p>La solution, c’est de disposer d’une database local et gratuite, <em>Sqlite</em>. L’intérêt c’est que c’est très léger et rapide à mettre en place, on peut s’en servir aussi bien pour stocker des données dans comme une vraie base de données par exemple les balances, GL, ventes, extraction… Avec l’avantage de créer plusieurs Tables et y accéder facilement.</p>
 <p>Un autre avantage qu’il faut le souligner c’est la possibilité de connecter votre base de données Sqlite avec Power BI ce que va réduire le temps d’analyse
 et ganger en productivité grâce à l’automatisation du Workflow.</p>
-<p>Python dispose lui aussi de package pour se connecter à Sqlite pour créer, manipuler et extraire en Dataframe.</p>
 <p>Avec Rstudio et le puissant package dplyr, on n’a pas besoin de maitriser le SQL. Le package dplyr simplifie la transformation des données mais aussi il est capable d’interagir
 directement avec les bases de données en traduisant les verbes dplyr en requêtes SQL. suivre ce lien pour en <a href="https://db.rstudio.com/getting-started/overview">savoir plus</a></p>
-<p>Installer install.packages(“RSQLite”)</p>
-<pre class="r"><code># Load les packages
+<p>Si vous ne disposez pas du package RSQlite dans votre environnement R, passer cette commande : install.packages(“RSQLite”)</p>
+<pre class="r"><code># Load des packages
 library(dplyr)
 library(tibble)
 library(RSQLite)</code></pre>
+<p>Load des données de nycflights</p>
 <pre class="r"><code>library(nycflights13)</code></pre>
-<p>first step, c’est la création d’une base de données, nommée nycflight.sqlite</p>
+<div id="créer-des-tables" class="section level3">
+<h3>Créer des tables</h3>
+<p>first step, c’est la création d’une base de données <strong>in memory</strong> .</p>
+<pre class="r"><code>con &lt;- dbConnect(RSQLite::SQLite(), &quot;:memory:&quot;)
+dbListTables(con)</code></pre>
+<pre><code>## character(0)</code></pre>
+<p>On va créer deux table dans notre base de données Sqlite et afficher la liste des tables crées</p>
+<pre class="r"><code>dbWriteTable(con, &quot;Flights&quot;, flights)
+dbWriteTable(con, &quot;Airports&quot;, airports)
+
+dbListTables(con)</code></pre>
+<pre><code>## [1] &quot;Airports&quot; &quot;Flights&quot;</code></pre>
+<p>Pour avoir plus d’information sur la connexion</p>
+<pre class="r"><code>summary(con)</code></pre>
+<pre><code>##           Length            Class             Mode 
+##                1 SQLiteConnection               S4</code></pre>
+<p>Explorer les champs (colonnes) dans la table <strong>Flights</strong></p>
+<pre class="r"><code>dbListFields(con, &quot;Flights&quot;)</code></pre>
+<pre><code>##  [1] &quot;year&quot;           &quot;month&quot;          &quot;day&quot;            &quot;dep_time&quot;      
+##  [5] &quot;sched_dep_time&quot; &quot;dep_delay&quot;      &quot;arr_time&quot;       &quot;sched_arr_time&quot;
+##  [9] &quot;arr_delay&quot;      &quot;carrier&quot;        &quot;flight&quot;         &quot;tailnum&quot;       
+## [13] &quot;origin&quot;         &quot;dest&quot;           &quot;air_time&quot;       &quot;distance&quot;      
+## [17] &quot;hour&quot;           &quot;minute&quot;         &quot;time_hour&quot;</code></pre>
+<p>On peut référencer la table <strong>Flights</strong> à l’aide de la fonction <em>tbl()</em></p>
+<pre class="r"><code>flights_db &lt;- tbl(con, &quot;Flights&quot;)
+airports_db &lt;- tbl(con, &quot;Airports&quot;)</code></pre>
+<p>Un apreçu de la table tibble</p>
+<pre class="r"><code>flights_db</code></pre>
+<pre><code>## # Source:   table&lt;Flights&gt; [?? x 19]
+## # Database: sqlite 3.34.1 [:memory:]
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     1     1      517            515         2      830            819
+##  2  2013     1     1      533            529         4      850            830
+##  3  2013     1     1      542            540         2      923            850
+##  4  2013     1     1      544            545        -1     1004           1022
+##  5  2013     1     1      554            600        -6      812            837
+##  6  2013     1     1      554            558        -4      740            728
+##  7  2013     1     1      555            600        -5      913            854
+##  8  2013     1     1      557            600        -3      709            723
+##  9  2013     1     1      557            600        -3      838            846
+## 10  2013     1     1      558            600        -2      753            745
+## # ... with more rows, and 11 more variables: arr_delay &lt;dbl&gt;, carrier &lt;chr&gt;,
+## #   flight &lt;int&gt;, tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;, air_time &lt;dbl&gt;,
+## #   distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dbl&gt;</code></pre>
+</div>
+<div id="querying-les-données" class="section level3">
+<h3>Querying les données</h3>
+<p>Selectionner les premiers lignes</p>
+<p>Exécuter…
+un SQL statement</p>
+<pre class="r"><code>dbGetQuery(con, &quot;select * from Flights limit 5&quot;)</code></pre>
+<pre><code>##   year month day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+## 1 2013     1   1      517            515         2      830            819
+## 2 2013     1   1      533            529         4      850            830
+## 3 2013     1   1      542            540         2      923            850
+## 4 2013     1   1      544            545        -1     1004           1022
+## 5 2013     1   1      554            600        -6      812            837
+##   arr_delay carrier flight tailnum origin dest air_time distance hour minute
+## 1        11      UA   1545  N14228    EWR  IAH      227     1400    5     15
+## 2        20      UA   1714  N24211    LGA  IAH      227     1416    5     29
+## 3        33      AA   1141  N619AA    JFK  MIA      160     1089    5     40
+## 4       -18      B6    725  N804JB    JFK  BQN      183     1576    5     45
+## 5       -25      DL    461  N668DN    LGA  ATL      116      762    6      0
+##    time_hour
+## 1 1357034400
+## 2 1357034400
+## 3 1357034400
+## 4 1357034400
+## 5 1357038000</code></pre>
+<p>Meme résultat en utilisant <em>dbFetch()</em></p>
+<pre class="r"><code>query &lt;- dbSendQuery(con, &quot;select * from Flights&quot;)
+dbFetch(query, n = 5)</code></pre>
+<pre><code>##   year month day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+## 1 2013     1   1      517            515         2      830            819
+## 2 2013     1   1      533            529         4      850            830
+## 3 2013     1   1      542            540         2      923            850
+## 4 2013     1   1      544            545        -1     1004           1022
+## 5 2013     1   1      554            600        -6      812            837
+##   arr_delay carrier flight tailnum origin dest air_time distance hour minute
+## 1        11      UA   1545  N14228    EWR  IAH      227     1400    5     15
+## 2        20      UA   1714  N24211    LGA  IAH      227     1416    5     29
+## 3        33      AA   1141  N619AA    JFK  MIA      160     1089    5     40
+## 4       -18      B6    725  N804JB    JFK  BQN      183     1576    5     45
+## 5       -25      DL    461  N668DN    LGA  ATL      116      762    6      0
+##    time_hour
+## 1 1357034400
+## 2 1357034400
+## 3 1357034400
+## 4 1357034400
+## 5 1357038000</code></pre>
+<p>avec R</p>
+<pre class="r"><code>flights_db %&gt;% head()</code></pre>
+<pre><code>## # Source:   lazy query [?? x 19]
+## # Database: sqlite 3.34.1 [:memory:]
+##    year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##   &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+## 1  2013     1     1      517            515         2      830            819
+## 2  2013     1     1      533            529         4      850            830
+## 3  2013     1     1      542            540         2      923            850
+## 4  2013     1     1      544            545        -1     1004           1022
+## 5  2013     1     1      554            600        -6      812            837
+## 6  2013     1     1      554            558        -4      740            728
+## # ... with 11 more variables: arr_delay &lt;dbl&gt;, carrier &lt;chr&gt;, flight &lt;int&gt;,
+## #   tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;, air_time &lt;dbl&gt;, distance &lt;dbl&gt;,
+## #   hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dbl&gt;</code></pre>
+<p>Filtrer les données</p>
+<p>avec SQL</p>
+<pre class="r"><code>dbSendQuery(con, &quot;SELECT * FROM Flights WHERE year = 2013&quot;)</code></pre>
+<pre><code>## &lt;SQLiteResult&gt;
+##   SQL  SELECT * FROM Flights WHERE year = 2013
+##   ROWS Fetched: 0 [incomplete]
+##        Changed: 0</code></pre>
+<p>Avec dplyr</p>
+<pre class="r"><code>flights_db %&gt;% filter(year == 2013)</code></pre>
+<pre><code>## # Source:   lazy query [?? x 19]
+## # Database: sqlite 3.34.1 [:memory:]
+##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt;          &lt;int&gt;     &lt;dbl&gt;    &lt;int&gt;          &lt;int&gt;
+##  1  2013     1     1      517            515         2      830            819
+##  2  2013     1     1      533            529         4      850            830
+##  3  2013     1     1      542            540         2      923            850
+##  4  2013     1     1      544            545        -1     1004           1022
+##  5  2013     1     1      554            600        -6      812            837
+##  6  2013     1     1      554            558        -4      740            728
+##  7  2013     1     1      555            600        -5      913            854
+##  8  2013     1     1      557            600        -3      709            723
+##  9  2013     1     1      557            600        -3      838            846
+## 10  2013     1     1      558            600        -2      753            745
+## # ... with more rows, and 11 more variables: arr_delay &lt;dbl&gt;, carrier &lt;chr&gt;,
+## #   flight &lt;int&gt;, tailnum &lt;chr&gt;, origin &lt;chr&gt;, dest &lt;chr&gt;, air_time &lt;dbl&gt;,
+## #   distance &lt;dbl&gt;, hour &lt;dbl&gt;, minute &lt;dbl&gt;, time_hour &lt;dbl&gt;</code></pre>
+<p>Il faut mentionner que c’est une requêtes à distantes, le code R est traduit en SQL et exécuté dans la base de données, pas dans R. Quand vous travaillez avec des bases de données, Dplyr essaie d’être aussi Lazy que possible : Il ne charge jamais les données dans R sauf si vous le demandez explicitement.</p>
+<pre class="r"><code>tailnum_delay_db &lt;- flights_db %&gt;%
+  group_by(tailnum) %&gt;%
+  summarise(
+    delay = mean(arr_delay),
+    n = n()
+  ) %&gt;%
+  arrange(desc(delay)) %&gt;%
+  filter(n &gt; 100)</code></pre>
+<p>Cette séquence d’opérations ne touche jamais la base de données. Ce n’est que lorsque vous demandez les données (par exemple, en exécutant <em>tailnum_delay</em>) que dplyr génère le SQL et envoie ensuite à la base de données en une seule étape tous le code.</p>
+<pre class="r"><code>tailnum_delay_db</code></pre>
+<pre><code>## # Source:     lazy query [?? x 3]
+## # Database:   sqlite 3.34.1 [:memory:]
+## # Ordered by: desc(delay)
+##    tailnum delay     n
+##    &lt;chr&gt;   &lt;dbl&gt; &lt;int&gt;
+##  1 &lt;NA&gt;    NA     2512
+##  2 N0EGMQ   9.98   371
+##  3 N10156  12.7    153
+##  4 N10575  20.7    289
+##  5 N11106  14.9    129
+##  6 N11107  15.0    148
+##  7 N11109  14.9    148
+##  8 N11113  15.8    138
+##  9 N11119  30.3    148
+## 10 N11121  10.3    154
+## # ... with more rows</code></pre>
+<p>dplyr traduit votre code R en SQL. Vous pouvez voir le SQL qu’il génère avec show_query() :</p>
+<pre class="r"><code>tailnum_delay_db %&gt;% show_query()</code></pre>
+<pre><code>## &lt;SQL&gt;
+## SELECT *
+## FROM (SELECT `tailnum`, AVG(`arr_delay`) AS `delay`, COUNT(*) AS `n`
+## FROM `Flights`
+## GROUP BY `tailnum`)
+## WHERE (`n` &gt; 100.0)</code></pre>
+<p>utiliser collect() pour extraire toutes les données dans au format tibble :</p>
+<pre class="r"><code>tailnum_delay &lt;- tailnum_delay_db %&gt;% collect()</code></pre>
+</div>
+<div id="jointure" class="section level3">
+<h3>Jointure</h3>
+<pre class="r"><code>flights_join_db &lt;- flights_db %&gt;%
+  select(year:day, dep_delay, arr_delay, dest) %&gt;%
+  left_join(airports_db, by = c(&quot;dest&quot; = &quot;faa&quot;))
+flights_join_db</code></pre>
+<pre><code>## # Source:   lazy query [?? x 13]
+## # Database: sqlite 3.34.1 [:memory:]
+##     year month   day dep_delay arr_delay dest  name        lat   lon   alt    tz
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1  2013     1     1         2        11 IAH   George B~  30.0 -95.3    97    -6
+##  2  2013     1     1         4        20 IAH   George B~  30.0 -95.3    97    -6
+##  3  2013     1     1         2        33 MIA   Miami In~  25.8 -80.3     8    -5
+##  4  2013     1     1        -1       -18 BQN   &lt;NA&gt;       NA    NA      NA    NA
+##  5  2013     1     1        -6       -25 ATL   Hartsfie~  33.6 -84.4  1026    -5
+##  6  2013     1     1        -4        12 ORD   Chicago ~  42.0 -87.9   668    -6
+##  7  2013     1     1        -5        19 FLL   Fort Lau~  26.1 -80.2     9    -5
+##  8  2013     1     1        -3       -14 IAD   Washingt~  38.9 -77.5   313    -5
+##  9  2013     1     1        -3        -8 MCO   Orlando ~  28.4 -81.3    96    -5
+## 10  2013     1     1        -2         8 ORD   Chicago ~  42.0 -87.9   668    -6
+## # ... with more rows, and 2 more variables: dst &lt;chr&gt;, tzone &lt;chr&gt;</code></pre>
+<p>Si on veut générer le code SQL</p>
+<pre class="r"><code>flights_join_db %&gt;% show_query()</code></pre>
+<pre><code>## &lt;SQL&gt;
+## SELECT `year`, `month`, `day`, `dep_delay`, `arr_delay`, `dest`, `name`, `lat`, `lon`, `alt`, `tz`, `dst`, `tzone`
+## FROM (SELECT `year`, `month`, `day`, `dep_delay`, `arr_delay`, `dest`
+## FROM `Flights`) AS `LHS`
+## LEFT JOIN `Airports` AS `RHS`
+## ON (`LHS`.`dest` = `RHS`.`faa`)</code></pre>
+<p>C’est juste un aperçu de la manipulation des database avec Rstudio, si vous voulez en savoir plus visiter le site officiel de Rstudio:<a href="https://db.rstudio.com/getting-started/connect-to-database" class="uri">https://db.rstudio.com/getting-started/connect-to-database</a> et sur le <strong>lazy evaluation</strong> : <a href="https://smithjd.github.io/sql-pet/chapter-lazy-evaluation-queries.html" class="uri">https://smithjd.github.io/sql-pet/chapter-lazy-evaluation-queries.html</a></p>
+</div>

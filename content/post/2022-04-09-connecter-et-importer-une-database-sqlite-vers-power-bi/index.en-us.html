@@ -1,0 +1,74 @@
+---
+title: Connecter et importer une database Sqlite vers Power BI
+author: 'Mohammed Hafrate'
+date: '2022-04-08'
+slug: Sqlite_BI
+categories: 
+   - Power query
+   - ODBC
+   - Sqlite
+   - Power BI
+tags: ["Sqlite", "ODBC", "Power BI", "Power Query","DNS" ]
+subtitle : "Importer des données de Sqlite à l'aide de Power query "
+summary: "Un guide étape par étape pour connecter la base de données SQLite à Power BI"
+thumbnailImage: "/img/DAX/sqlite_bi.png"
+thumbnailImagePosition: left
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<p>Il est très facile de charger des données d’une base de données SQLite
+vers un modèle Power BI Desktop. Il vous suffit d’utiliser une connexion
+de données ODBC et de vous connecter à un “DNS ODBC” prédéfini"(source
+de données).</p>
+<p>Les étapes à suivre</p>
+<p>1- Télécharger le driver, pilote, ODBC de Sqlite</p>
+<p>2- Configurer la source de données ODBC</p>
+<p>3- Connecter une base données Sqlite à Power query</p>
+<p>4- Load les données dans Power BI</p>
+<div id="installer-le-pilote-sqlite" class="section level3">
+<h3>Installer le pilote Sqlite</h3>
+<p>Install SQLite ODBC Driver The SQLite ODBC Driver can be downloaded
+here.</p>
+<p>Le pilote ODBC 32 bits (obligatoire pour Windows 32 bits et 64 bits).
+Téléchargez et installez ce qui suit (sélectionnez les 2 pilotes SQLite)
+depuis le site <a href="http://www.ch-werner.de/sqliteodbc/sqliteodbc_w64.exe" class="uri">http://www.ch-werner.de/sqliteodbc/sqliteodbc_w64.exe</a>
+Si vous ne disposez pas de base Slite, vous télécharger la base de
+<strong>Northwind</strong> , <a href="https://github.com/hafrate/Sqlite_DB/blob/main/README.md">le
+lien</a>.</p>
+<div id="configurer-le-dns" class="section level4">
+<h4>Configurer le DNS</h4>
+<p>Lorsque nous avons ajouté une base de données Sqite, on doit configurer
+une connexion ODBC à la nouvelle base de données pour que cette source
+de données soit visible pourPower query.</p>
+<p>Procédure</p>
+<ul>
+<li>Sur l’onglet “Rechercher”, tapez ODBC &gt; Sources de données (ODBC).</li>
+<li>Sélectionnez l’onglet Nom DSN utilisateur</li>
+<li>Cliquez sur Ajouter et sélectionnez Sqlite3 ODBC Driver dans la
+liste.</li>
+<li>Définir un nom à votre connexion (par exemple : Sqlite_test)</li>
+<li>Sélectionner la base de données Sqlite à importer.</li>
+<li>Cliquez sur OK.</li>
+</ul>
+<p><img src="/img/DAX/sqlite_step1.PNG" /></p>
+</div>
+</div>
+<div id="connecter-la-base-sqlite-à-power-query" class="section level3">
+<h3>Connecter la base Sqlite à Power query</h3>
+<p>Sur Power BI</p>
+<p>1-Naviquer vers l’onglet <strong>Obtenir des données</strong></p>
+<p>2- Choisir <strong>Plus…</strong></p>
+<p>3- Filtrer sur ODBC</p>
+<p>4- Choisir la base sqlite que nous avons créer le DNS</p>
+<p>5- Sélectionner la table ou plusieurs à uploader dans Power query</p>
+<p>6- Transformer les données</p>
+<p><img src="/img/DAX/sqlitegetdata.PNG" /></p>
+<p>Vous pouvez modéliser vos données, créer des relation, table de date
+pour exploiter les fonctions de DAX Time intelligence, exploiter les
+visualisations de Power BI…</p>
+</div>

@@ -1,0 +1,74 @@
+---
+title: "Mise en place de l'IFRS 16 à l'aide de Power Query"
+author: "Mohammed Hafrate"
+date: '2022-04-11'
+slug: ifrs16
+categories: ["ifrs16", "Powerquery"]
+tags: []
+keywords:
+  - tech
+  
+summary: "Comment mettre en place rapidement la norme IFRS 16 en Power query"
+thumbnailImage: "/img/DAX/ifrs16.png"
+thumbnailImagePosition: left
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, tidy = "styler")
+```
+
+Si vous avez déjà mis en place la norme IFRS, vous pouvez utiliser notre méthode pour valider vos chiffres et assurer un contrôle de résultat de votre outil SI.
+
+##### Un peu de théorie
+
+Premièrement, il convient de rappeler le processus de réflexion suivi par les entreprises au moment d'évaluer si un contrat contient un contrat de location <https://www.mnp.ca/-/media/files/mnp/pdf/_mgtn/siteassets/media/pdfs/apsg/2019/2017-02-ifrs-16-guide-final-fr-pdf.pdf>
+
+L'organigramme ci-dessous définit les étapes si un contrat est considérée comme un contrat de location selon IFRS 16
+
+![](/img/DAX/stepifrs16.PNG)
+
+L'évaluation initiale du contrat de location et la dette liée, comptabilisée initialement au passif; est égale à la somme actualisée des paiements restant à effectuer depuis le début du contrat jusqu'à son terme, ces paiements comprenant les loyers fixes et, le cas échéant, les sommes à payer du fait de l'exercice d'options, les garanties de valeur résiduelle, etc.
+
+Il convient de déterminer la durée du contrat, le taux d'actualisation (taux implicite ou taux d'endettement marginal) pour estimer la valeur de la dette en Passif et le droit d'utilisation en Actif.
+
+##### Rappel sur le calcul de la valeur actualisée (Un seul contrat)
+
+Pour calculer le montant des redevances restant à payer à l'avenir, il faut faire une actualisation des flux financiers futurs (loyers). La formule est la suivante pour calculer la valeur actuelle de la redevance :
+
+![](/img/DAX/lease1.PNG)
+
+A l'instant présent t = 0, on a : Vt = Vn x [1/(1+i)\^n] avec :
+
+-- V0 : la valeur actuelle des redevances
+
+-- Vn : la valeur des redevances à l'année n
+
+Dans notre exemple, n va de 1 à 5 puisque la redevance est versée chaque année pendant 5 ans et un taux d'actualisation i = 10%.
+
+Au total, au bout de 5 ans, le montant des redevances actualisées est de 390 079
+
+Traduction dans les états financiers du preneur : Un **droit d'utilisation de l'actif** de 390 079 en contre-partie une **dette liée au contrat de location** : 390 079
+
+Mais, si on dispose de plusieurs Contrat, l'Excel va devenir un handicap pour le calcul d'actualisation. Il faut évaluer chaque contrat dans une feuille Excel et consolider les données aprés, imaginez si vous avez 100 ou plus...
+
+![](/img/DAX/lease2.PNG)
+
+#### Solution
+
+On peut utiliser Excel mais passer par Power Query pour générer les flux futurs pour chaque contrat et uploader le résultat dans une seul feuille Excel. C'est possible grâce à la fonction List.Transform.
+
+0...[Durée_Mois] génére une liste de dates par mois depuis le début du contrat jusqu'à la date d'échéance.
+
+![](/img/DAX/lease3.PNG)
+
+Aprés, on peut calculer l'ensemble des champs que nous avons besoin, les intérêts, capital début de période, capital fin de période, dotation d'amortissement et le cumul d'amortissement
+
+![](/img/DAX/lease4.PNG)
+
+Pour faciliter le suivi et l'estimation de l'impact du retraitement, on synthése le calcul dans un tableau dynamique.
+
+![](/img/DAX/lease5.PNG)
+
+On peut facilement automatiser et générer la requête avec VBA. Magic !!!!
+
+Power query is the Best... et c'est GRATUIT.

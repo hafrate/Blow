@@ -1,17 +1,16 @@
 ---
 title: Text Mining -  le Taux d'actualisation en IFRS
-author: Mohammed Hafrate'
-date: '2021-12-17'
+author: "Mohammed Hafrate"
+date: '2021-12-21'
 slug: textMining_ifrs
 categories:
   - Rstat
   - IFRS
   - Discout Rate
-tags: []
+tags: ["rstats", "ifrs", "taux d'actualisation", "pdf", "Text Mining", "IASB"]
 keywords:
   - tech
-subtitle : 'Fouille dans données non structurés en format PDF'
-summary: "Analyse de Fréauence du Taux d'actualisation dans les Normes IFRS."
+summary : "Fouille dans les données non structurés en format PDF, application pour analyser la Fréquence du mots <Taux d'actualisation> dans les Normes IFRS "
 thumbnailImage: "/img/discountRate.PNG"
 thumbnailImagePosition: left
 ---
@@ -25,7 +24,7 @@ thumbnailImagePosition: left
 <blockquote>
 <p>Le text mining est utilisé pour classer des documents, réaliser des résumés de synthèse automatique ou encore pour assister la veille stratégique ou technologique selon des pistes de recherche prédéfinis.</p>
 </blockquote>
-<p><em>Notre target</em> : utiliser la technique de fréquence pour fouiller l’ensemble de normes IFRS et extraire le mot <em>taux d’actualisation</em> pour facilter l’exploration et l’analyse par norme du taux en normes IFRS.</p>
+<p><em>Notre target</em> : utiliser la technique de fréquence pour fouiller l’ensemble de normes IFRS et extraire le mot <em>taux d’actualisation</em> pour facilter l’exploration et l’analyse du taux par norme.</p>
 <div id="cest-quoi-le-taux-dactualisation-en-ifrs" class="section level3">
 <h3>C’est quoi le taux d’actualisation en IFRS ?</h3>
 <p>La définition proposé par l’IASB :</p>
@@ -139,36 +138,36 @@ resultat[[1]] # représente la premiére valeur -- IAS 1</code></pre>
   }))
 resultat2</code></pre>
 <pre><code>## # A tibble: 40 x 2
-##    Normes                                                      content          
-##    &lt;chr&gt;                                                       &lt;named list&gt;     
-##  1 IAS 1 Presentation of financial statements.pdf              &lt;tibble[,5] [1 x~
-##  2 IAS 10 Events after the balance sheet date.pdf              &lt;tibble[,5] [0 x~
-##  3 IAS 11 Construction contracts.pdf                           &lt;tibble[,5] [0 x~
-##  4 IAS 12 Income taxes.pdf                                     &lt;tibble[,5] [0 x~
-##  5 IAS 16 Property, plant and equipment.pdf                    &lt;tibble[,5] [0 x~
-##  6 IAS 17 Leases.pdf                                           &lt;tibble[,5] [2 x~
-##  7 IAS 18 Revenue.pdf                                          &lt;tibble[,5] [0 x~
-##  8 IAS 19 Employee benefits.pdf                                &lt;tibble[,5] [20 ~
-##  9 IAS 2 Inventories.pdf                                       &lt;tibble[,5] [0 x~
-## 10 IAS 20 Accounting for government grants and disclosure of ~ &lt;tibble[,5] [0 x~
+##    Normes                                                               content 
+##    &lt;chr&gt;                                                                &lt;named &gt;
+##  1 IAS 1 Presentation of financial statements.pdf                       &lt;tibble&gt;
+##  2 IAS 10 Events after the balance sheet date.pdf                       &lt;tibble&gt;
+##  3 IAS 11 Construction contracts.pdf                                    &lt;tibble&gt;
+##  4 IAS 12 Income taxes.pdf                                              &lt;tibble&gt;
+##  5 IAS 16 Property, plant and equipment.pdf                             &lt;tibble&gt;
+##  6 IAS 17 Leases.pdf                                                    &lt;tibble&gt;
+##  7 IAS 18 Revenue.pdf                                                   &lt;tibble&gt;
+##  8 IAS 19 Employee benefits.pdf                                         &lt;tibble&gt;
+##  9 IAS 2 Inventories.pdf                                                &lt;tibble&gt;
+## 10 IAS 20 Accounting for government grants and disclosure of governmen~ &lt;tibble&gt;
 ## # ... with 30 more rows</code></pre>
 <p>El Voilà :)
 on peut transformer ce tibble en dataframe pour explorer plus.</p>
 <pre class="r"><code>resultat2_df &lt;- resultat2 %&gt;% tidyr::unnest(cols = c(content))
 resultat2_df</code></pre>
 <pre><code>## # A tibble: 108 x 6
-##    Normes                      keyword    page_num line_num line_text token_text
-##    &lt;chr&gt;                       &lt;chr&gt;         &lt;int&gt;    &lt;int&gt; &lt;list&gt;    &lt;list&gt;    
-##  1 IAS 1 Presentation of fina~ discount ~        7      302 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  2 IAS 17 Leases.pdf           discount ~        1       27 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  3 IAS 17 Leases.pdf           discount ~        2       68 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  4 IAS 19 Employee benefits.p~ discount ~        4      151 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  5 IAS 19 Employee benefits.p~ discount ~        5      178 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  6 IAS 19 Employee benefits.p~ discount ~        5      189 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  7 IAS 19 Employee benefits.p~ discount ~        6      268 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  8 IAS 19 Employee benefits.p~ discount ~        6      270 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  9 IAS 19 Employee benefits.p~ discount ~        7      272 &lt;chr [3]&gt; &lt;list [3]&gt;
-## 10 IAS 19 Employee benefits.p~ discount ~        7      276 &lt;chr [3]&gt; &lt;list [3]&gt;
+##    Normes                         keyword page_num line_num line_text token_text
+##    &lt;chr&gt;                          &lt;chr&gt;      &lt;int&gt;    &lt;int&gt; &lt;list&gt;    &lt;list&gt;    
+##  1 IAS 1 Presentation of financi~ discou~        7      302 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  2 IAS 17 Leases.pdf              discou~        1       27 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  3 IAS 17 Leases.pdf              discou~        2       68 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  4 IAS 19 Employee benefits.pdf   discou~        4      151 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  5 IAS 19 Employee benefits.pdf   discou~        5      178 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  6 IAS 19 Employee benefits.pdf   discou~        5      189 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  7 IAS 19 Employee benefits.pdf   discou~        6      268 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  8 IAS 19 Employee benefits.pdf   discou~        6      270 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  9 IAS 19 Employee benefits.pdf   discou~        7      272 &lt;chr [3]&gt; &lt;list [3]&gt;
+## 10 IAS 19 Employee benefits.pdf   discou~        7      276 &lt;chr [3]&gt; &lt;list [3]&gt;
 ## # ... with 98 more rows</code></pre>
 </div>
 <div id="fréquence-du-mot-discount-rate-par-norme" class="section level3">
@@ -179,19 +178,19 @@ resultat2_df</code></pre>
   arrange(desc(nb))
 frequence</code></pre>
 <pre><code>## # A tibble: 11 x 3
-##    Normes                                                 content             nb
-##    &lt;chr&gt;                                                  &lt;named list&gt;     &lt;int&gt;
-##  1 IAS 36 Impairment of assets.pdf                        &lt;tibble[,5] [36~    36
-##  2 IFRS 13 Fair Value Measurement.pdf                     &lt;tibble[,5] [21~    21
-##  3 IAS 19 Employee benefits.pdf                           &lt;tibble[,5] [20~    20
-##  4 IFRS 16 Leases.pdf                                     &lt;tibble[,5] [9 ~     9
-##  5 IFRS 4 Insurance contracts.pdf                         &lt;tibble[,5] [8 ~     8
-##  6 IFRS 9 Financial Instruments.pdf                       &lt;tibble[,5] [4 ~     4
-##  7 IAS 37 Provisions, contingent liabilities and conting~ &lt;tibble[,5] [3 ~     3
-##  8 IAS 17 Leases.pdf                                      &lt;tibble[,5] [2 ~     2
-##  9 IFRS 1 First-time adoption of international financial~ &lt;tibble[,5] [2 ~     2
-## 10 IFRS 15 Revenue from Contracts with Customers.pdf      &lt;tibble[,5] [2 ~     2
-## 11 IAS 1 Presentation of financial statements.pdf         &lt;tibble[,5] [1 ~     1</code></pre>
+##    Normes                                                         content     nb
+##    &lt;chr&gt;                                                          &lt;named &gt; &lt;int&gt;
+##  1 IAS 36 Impairment of assets.pdf                                &lt;tibble&gt;    36
+##  2 IFRS 13 Fair Value Measurement.pdf                             &lt;tibble&gt;    21
+##  3 IAS 19 Employee benefits.pdf                                   &lt;tibble&gt;    20
+##  4 IFRS 16 Leases.pdf                                             &lt;tibble&gt;     9
+##  5 IFRS 4 Insurance contracts.pdf                                 &lt;tibble&gt;     8
+##  6 IFRS 9 Financial Instruments.pdf                               &lt;tibble&gt;     4
+##  7 IAS 37 Provisions, contingent liabilities and contingent asse~ &lt;tibble&gt;     3
+##  8 IAS 17 Leases.pdf                                              &lt;tibble&gt;     2
+##  9 IFRS 1 First-time adoption of international financial reporti~ &lt;tibble&gt;     2
+## 10 IFRS 15 Revenue from Contracts with Customers.pdf              &lt;tibble&gt;     2
+## 11 IAS 1 Presentation of financial statements.pdf                 &lt;tibble&gt;     1</code></pre>
 <p>On crée notre graphe avec le package ggplot2</p>
 <pre class="r"><code>frequence %&gt;%
   mutate(Normes = str_sub(Normes, 1, -5)) %&gt;%
@@ -203,25 +202,25 @@ frequence</code></pre>
   labs(
     x = &quot;Norme&quot;, y = &quot;Nombre d&#39;occurence&quot;,
     title = &quot;Taux d&#39;actualisation en IFRS&quot;,
-    subtitle = &quot;Les normes de l&#39;évaluation des Actifs non courant avec plus de fréquence&quot;
+    subtitle = &quot;Classement des normes IFRS par fréquence d&#39;occurence du Taux d&#39;actualisation&quot;
   )</code></pre>
 <p><img src="/post/2021-12-17-text-mining-application-pour-le-taux-d-actualisation-en-ifrs/index.en-us_files/figure-html/unnamed-chunk-9-1.png" width="1440" /></p>
 <p>On veut accéder au paragraphe; par exemple pour la norme - IFRS 13 Faire Value</p>
 <pre class="r"><code>IFRS_13 &lt;- resultat2_df %&gt;% filter(Normes == &quot;IFRS 13 Fair Value Measurement.pdf&quot;)
 IFRS_13</code></pre>
 <pre><code>## # A tibble: 21 x 6
-##    Normes                     keyword     page_num line_num line_text token_text
-##    &lt;chr&gt;                      &lt;chr&gt;          &lt;int&gt;    &lt;int&gt; &lt;list&gt;    &lt;list&gt;    
-##  1 IFRS 13 Fair Value Measur~ discount r~        6      273 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  2 IFRS 13 Fair Value Measur~ discount r~        6      276 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  3 IFRS 13 Fair Value Measur~ discount r~        6      279 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  4 IFRS 13 Fair Value Measur~ discount r~        6      280 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  5 IFRS 13 Fair Value Measur~ discount r~        6      281 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  6 IFRS 13 Fair Value Measur~ discount r~        6      282 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  7 IFRS 13 Fair Value Measur~ discount r~        6      286 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  8 IFRS 13 Fair Value Measur~ discount r~        7      297 &lt;chr [3]&gt; &lt;list [3]&gt;
-##  9 IFRS 13 Fair Value Measur~ discount r~        7      298 &lt;chr [3]&gt; &lt;list [3]&gt;
-## 10 IFRS 13 Fair Value Measur~ discount r~        7      299 &lt;chr [3]&gt; &lt;list [3]&gt;
+##    Normes                         keyword page_num line_num line_text token_text
+##    &lt;chr&gt;                          &lt;chr&gt;      &lt;int&gt;    &lt;int&gt; &lt;list&gt;    &lt;list&gt;    
+##  1 IFRS 13 Fair Value Measuremen~ discou~        6      273 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  2 IFRS 13 Fair Value Measuremen~ discou~        6      276 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  3 IFRS 13 Fair Value Measuremen~ discou~        6      279 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  4 IFRS 13 Fair Value Measuremen~ discou~        6      280 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  5 IFRS 13 Fair Value Measuremen~ discou~        6      281 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  6 IFRS 13 Fair Value Measuremen~ discou~        6      282 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  7 IFRS 13 Fair Value Measuremen~ discou~        6      286 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  8 IFRS 13 Fair Value Measuremen~ discou~        7      297 &lt;chr [3]&gt; &lt;list [3]&gt;
+##  9 IFRS 13 Fair Value Measuremen~ discou~        7      298 &lt;chr [3]&gt; &lt;list [3]&gt;
+## 10 IFRS 13 Fair Value Measuremen~ discou~        7      299 &lt;chr [3]&gt; &lt;list [3]&gt;
 ## # ... with 11 more rows</code></pre>
 <p>Formatter le output à l’aide de package kableExtra</p>
 <pre class="r"><code>text &lt;- IFRS_13 %&gt;%

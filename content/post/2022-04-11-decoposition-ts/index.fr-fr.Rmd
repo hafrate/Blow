@@ -1,0 +1,54 @@
+---
+title: Prévision des séries chronologique - Décomposition
+author: 'Mohammed Hafrate'
+date: '2022-04-11'
+categories: 
+   - Power query
+   - ODBC
+   - Forecast
+   - Power BI
+tags: ["Sqlite", "ODBC", "Power BI"]
+
+summary: "Métriques d'évaluation pour les modèles de classification"
+thumbnailImage: "/img/DAX/sqlite_bi.png"
+thumbnailImagePosition: left
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, tidy = "styler")
+```
+
+
+https://github.com/KaroRonty/StockMarketLongTermForecast/blob/master/StockMarketTimeSeries.R
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(tidyverse)
+library(sweep)
+library(timetk)
+library(lubridate)
+library(gridExtra)
+
+```
+
+```{r}
+data("bike_sales")
+bike <- bike_sales%>%mutate(order.date= as_date(zoo::as.yearmon(order.date)))%>%
+  group_by(order.date, category.secondary)%>%
+  summarise(qty=sum(quantity))
+```
+
+```{r}
+bike%>%
+  ggplot(aes(order.date, qty), group = category.secondary)+
+  geom_line(aes(color= category.secondary))
+
+```
+
+

@@ -1,0 +1,153 @@
+---
+title: DAX - Les foncions de Time Intelligence
+author: 'Mohammed Hafrate'
+date: '2022-04-08'
+slug: DAX_TimeInt
+categories: 
+   - DAX
+   - Power Pivot
+   - Power BI
+tags: ["DAX", "Power BI"]
+keywords:
+  - tech
+subtitle : 'Les fonction DAX de Time Intelligence'
+summary: "Les fonctions DAX d'intelligence temporelle de Power BI aident les utilisateurs à effectuer des calculs permettant d'évaluer les performances."
+thumbnailImage: "/img/DAX/DAX_front.PNG"
+thumbnailImagePosition: left
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<p>Lorsque vous traitez des données, vous avez besoin de les manipuler en utilisant des périodes de temps (jours, mois, trimestres et années, entre autres), de pouvoir les comparer, d’analyser leur évolution dans le temps. Power BI offre de nombreuses fonctions de DAX Time Intelligence toutes prêtes à l’emploi, <em>syntax sugars</em>.</p>
+<p>Pour être sûr que les fonctions Time Intelligence fonctionnent correctement, il est impératif de disposer d’une table du temps.</p>
+<p>Dans cet article, je vais passer en revue quelques fonctions d’intelligence temporelle très utiles disponibles dans Power BI, ainsi que les étapes pour les utiliser.</p>
+<p>Les étapes à suivre :</p>
+<ol style="list-style-type: decimal">
+<li>Créer une table date <strong>Calendrier</strong> pour pouvoir utiliser les fonction time intelligence.</li>
+<li>Marquer la table comme table de date</li>
+<li>Etablir une relation entre la table de dates et la table Ventes</li>
+<li>Créer des mesures temporelles</li>
+</ol>
+<p>On va utiliser la fonctions DAX <em>CALENDARAUTO()</em> pour générer une plage table de dates. Accédez à l’onglet Table sur le ruban. Sélectionnez Nouvelle table, puis entrez la formule DAX suivante :</p>
+<blockquote>
+<p>si vous ne disposez pas de la table date, on peut créer une avec le code DAX</p>
+</blockquote>
+<pre class="js"><code>Calendrier =
+  VAR MinYear = YEAR ( MIN ( Sales[Order Date] ) )
+  VAR MaxYear = YEAR ( MAX ( Sales[Order Date] ) )
+  RETURN
+    ADDCOLUMNS (
+      FILTER (
+         CALENDARAUTO ( ),
+         YEAR ( [Date] ) &gt;= MinYear &amp;&amp;
+         YEAR ( [Date] ) &lt;= MaxYear
+            ),
+     &quot;Année&quot;, YEAR ( [Date] ),
+     &quot;Trim&quot;, INT ( FORMAT ( [Date], &quot;q&quot; ) ),
+     &quot;Nom Trim&quot;, &quot;Q&quot; &amp; INT ( FORMAT ( [Date], &quot;q&quot; ) ),
+     &quot;Mois&quot;, MONTH ( [Date] ),
+     &quot;Nom du Mois&quot;, FORMAT ( [Date], &quot;mmmm&quot; ),
+     &quot;Semaine&quot;, WEEKDAY ( [Date] ),
+     &quot;Nom de la semaine&quot;, FORMAT ( [Date], &quot;dddd&quot; ),
+     &quot;Année Mois Number&quot;, YEAR ( [Date] ) * 100 + MONTH ( [Date] ),
+     &quot;Année Mois&quot;, FORMAT ( [Date], &quot;mmmm&quot; ) &amp; &quot; &quot; &amp; YEAR ( [Date] ),
+     &quot;Année Trim Number&quot;, YEAR ( [Date] ) * 100 + INT ( FORMAT ( [Date], &quot;q&quot; ) ),
+     &quot;Année Trim&quot;, &quot;Q&quot; &amp; FORMAT ( [Date], &quot;q&quot; ) &amp; &quot;-&quot; &amp; YEAR ( [Date] )
+)</code></pre>
+<p>la fonction CALENDARAUTO() balayera votre dataset entier pour en extraire la première et dernière valeur de date.
+si vous avez une colonne de date de naissance des clients, votre calendrier aura des dates qui ne seront pas pertinentes (même si commencer le calendrier en 1959 ne vous sert à rien, la fonction CALENDARAUTO() prend en compte toutes les colonnes de dates). Sinon vous pouvez aussi utiliser les fonctions MIN et MAX pour que le calendrier soit tout le temps dynamique et filitrés les dates adaptées à votre modèle.</p>
+<p><img src="/img/DAX/DAX_creerTable.png" /></p>
+<p>N’oublie pas de trier la colonne Nom du mois par la colonne Mois, la colonne..
+dans le cas contraire, les mois, années, semaines seront triés par ordre alphabétique dans l’axe d’un graphique.</p>
+<p>Marquer la table de date comme référence afin de pouvoir utiliser les fonctions de time intelligence de façon correcte !</p>
+<div id="les-fonctions-dax-time-intelligence-les-plus-utilisés" class="section level3">
+<h3>Les fonctions DAX Time intelligence les plus utilisés</h3>
+<p>Dans la table <strong>Sales</strong>, créer de nouvelles mesures pour chaque dimension de période d’analyse. Il est conseillé de créer une Table vide dédiée aux mesures, c’est the best practices.</p>
+<div id="calcul-la-somme-de-la-colonne-salessalesamount" class="section level4">
+<h4>calcul la somme de la colonne <strong>Sales[SalesAmount]</strong></h4>
+<pre class="js"><code>[Ventes] =
+            SUM ( Sales[SalesAmount] )</code></pre>
+</div>
+<div id="cumul-annuel-jusquà-ce-jour-ytd-year-to-date" class="section level4">
+<h4>Cumul annuel jusqu’à ce jour – YTD: Year To Date</h4>
+<pre class="js"><code>[Montant YTD] =
+            TOTALYTD (
+            [Ventes],
+            &#39;Calendrier&#39;[Date]
+            )</code></pre>
+</div>
+<div id="cumul-trimestriel-jusquà-ce-jour-qtd-quarter-to-date" class="section level4">
+<h4>Cumul trimestriel jusqu’à ce jour – QTD: Quarter To Date</h4>
+<pre class="js"><code>[Ventes QTD]  =
+          TOTALQTD (
+            [Ventes],
+            &#39;Calendrier&#39;[Date]      
+                )</code></pre>
+</div>
+<div id="cumul-mensuel-jusquà-ce-jour-mtd-month-to-date" class="section level4">
+<h4>Cumul mensuel jusqu’à ce jour – MTD: Month To Date</h4>
+<pre class="js"><code>[Ventes MTD] :=
+            TOTALMTD (       
+            [Ventes],
+            &#39;Calendrier&#39;[Date]      
+        )</code></pre>
+</div>
+<div id="cumul-mensuel-du-mois-précédent-pm-previous-month" class="section level4">
+<h4>Cumul mensuel du mois précédent – PM: Previous Month</h4>
+<pre class="js"><code>[Ventes PM] =        
+            CALCULATE (
+                [Ventes],
+                PREVIOUSMONTH ( &#39;Calendrier&#39;[Date] )
+</code></pre>
+</div>
+<div id="cumul-trimestriel-précédente-pq-previous-quarter" class="section level4">
+<h4>Cumul trimestriel précédente – PQ: Previous Quarter</h4>
+<pre class="js"><code>[Ventes PQ] =        
+            CALCULATE (
+                [Ventes],
+                PREVIOUSQUARTER  ( &#39;Calendrier&#39;[Date] )</code></pre>
+</div>
+<div id="cumulé-de-lannée-précédente-splysame-period-last-year" class="section level4">
+<h4>Cumulé de l’année précédente– SPLY:Same Period Last Year</h4>
+<pre class="js"><code>    [Ventes YTDLY] :=
+            CALCULATE (
+                 [Ventes],
+                DATESYTD (
+                        SAMEPERIODLASTYEAR ( &#39;Calendrier&#39;[Date] )
+                        )
+            )
+</code></pre>
+</div>
+<div id="cumulé-de-lannée-précédente-splysame-period-last-year-1" class="section level4">
+<h4>Cumulé de l’année précédente – SPLY:Same Period Last Year</h4>
+<p><strong>PREVIOUSYEAR</strong> renvoie le total des ventes cumulés à la fin de l’année précedentes.</p>
+<pre class="js"><code>    [Ventes YTDLY 2] :=
+            CALCULATE (
+                 [Ventes],
+                PREVIOUSYEAR ( &#39;Calendrier&#39;[Date] )
+                        )</code></pre>
+</div>
+<div id="moyenne-mobile-sur-les-12-derniers-mois-average-12-rolling-months" class="section level4">
+<h4>Moyenne Mobile sur les 12 derniers Mois Average 12 Rolling Months :</h4>
+<pre class="js"><code>    
+        [Ventes Rolling 12 Mois] =
+                VAR NumMois = 12
+                VAR DernierDateVisible =
+                    MAX ( &#39;Date&#39;[Date] )
+                VAR Period =
+                    DATESINPERIOD ( &#39;Date&#39;[Date], DernierDateVisible, - NumMois, MONTH )
+                VAR Result =
+                    CALCULATE (
+                        AVERAGEX (
+                            VALUES ( &#39;Date&#39;[Calendar Year Month] ),
+                            [Sales Amount]
+                        ),
+                        Period
+                    )
+                Return Result
+</code></pre>
+<p>Pour en savoir plus, visitez le site de sqlbi.com…les guru DAX
+Enjoy !</p>
+</div>
+</div>

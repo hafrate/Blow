@@ -1,0 +1,82 @@
+---
+title: Evaluation de la performance pour les ML de Classification
+author: 'Mohammed Hafrate'
+date: '2022-04-24'
+categories: 
+   - Power query
+   - ODBC
+   - Sqlite
+   - Power BI
+tags: ["Xgboost", "Tidymodels", ""]
+
+summary: "Métriques d'évaluation pour les modèles de classification"
+thumbnailImage: "/img/DAX/sqlite_bi.png"
+thumbnailImagePosition: left
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, tidy = "styler")
+```
+
+Cet article décrit comment utiliser les métriques d'évaluation pour
+votre modèle une fois celui-ci entraîné, ainsi que certaines
+recommandations de base permettant d'améliorer ses performances.
+
+Les modèles de classification fournissent les métriques suivantes :
+
+• AUC PR : aire sous la courbe de précision/rappel (PR). Cette valeur
+est comprise entre zéro et un. Plus elle est élevée, plus le modèle est
+de bonne qualité.
+
+• AUC ROC : aire sous la courbe ROC (Receiver Operating Characteristic).
+Cette valeur est comprise entre zéro et un. Plus elle est élevée, plus
+le modèle est de bonne qualité.
+
+• Justesse (Accuracy): fraction des prédictions de classification
+produites par le modèle qui étaient correctes.
+
+• Perte logistique (Log loss) : entropie croisée entre les prédictions
+du modèle et les valeurs cibles. Cette valeur varie de zéro à l'infini.
+Plus elle est faible, plus le modèle est de bonne qualité.
+
+• Score F1 (F1 score): moyenne harmonique de précision et du rappel. F1
+est une métrique utile si vous souhaitez équilibrer précision et rappel,
+et que les classes sont réparties de façon inégale.
+
+• Précision (Precision) : fraction des prédictions positives produites
+par le modèle qui étaient correctes. (Les prédictions positives
+correspondent à la combinaison des faux positifs et des vrais positifs.)
+
+• Rappel (Recall) : fraction des lignes comportant cette étiquette que
+le modèle a correctement prédites. Également appelé "taux de vrais
+positifs".
+
+• Taux de faux positifs (False positive rate): fraction de lignes
+prédites par le modèle comme étiquette cible, mais qui ne le sont pas
+(faux positifs).
+
+• Matrice de confusion: la matrice de confusion vous permet de
+comprendre l'origine des classifications erronées (quelles classes ont
+été confondues avec une autre). Chaque ligne représente la vérité
+terrain pour une étiquette spécifique, et chaque colonne indique les
+étiquettes prédites par le modèle. Les matrices de confusion ne sont
+fournies que pour les modèles de classification dont la colonne cible
+contient 10 valeurs ou moins.
+
+Seuil de score Le seuil de score est un nombre compris entre 0 et 1. Il
+permet de spécifier le niveau de confiance minimal selon lequel une
+valeur de prédiction donnée doit être considérée comme vraie. Par
+exemple, si vous avez une classe dont il est peu probable qu'elle
+représente la valeur réelle, il est conseillé d'en abaisser le seuil. En
+effet, avec un seuil de 0,5 ou plus, cette classe ne fera quasiment
+jamais l'objet de prédictions. Un seuil plus élevé diminue les faux
+positifs mais augmente le nombre de faux négatifs. Un seuil plus bas
+diminue les faux négatifs mais augmente le nombre de faux positifs.
+Autrement dit, le seuil de score affecte la précision et le rappel. Un
+seuil plus élevé augmente la précision (car le modèle n'effectue jamais
+de prédiction à moins d'être quasiment sûr), mais le rappel (le
+pourcentage d'exemples positifs prédits correctement par le modèle)
+diminue.

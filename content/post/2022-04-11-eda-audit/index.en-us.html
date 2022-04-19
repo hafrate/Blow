@@ -1,0 +1,943 @@
+---
+title: Application EDA dans le Audit Data Analytics  (ADA)
+author: ''
+date: '2022-04-11'
+slug: EDA_Audit
+categories: []
+tags: ["Audit", "Analytique", "Finance", "EDA", "ADA"]
+keywords:
+  - tech
+summary: "Exploration des données (EDA) au Service de l'audit"
+thumbnailImage: "/img/DAX/ada.PNG"
+thumbnailImagePosition: left
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<p>Les nouvelles méthodes Analytique viennent bouleverser l’organisation
+des entreprises et le métier de l’audit n’est pas épargnée par ces
+changements. Ainsi, Data Analytics permettent d’analyser d’importantes
+quantités de données lors d’un audit des états financiers à l’aide de
+logiciels souvent open source, comme R ou Python.</p>
+<blockquote>
+<p>L’Audit Data Analytics ou Analyse des Données en Audit (ADA) se
+définit comme « la science et l’art de découvrir et d’analyser des
+modèles, d’identifier les anomalies et d’extraire d’autres
+informations utiles dans les données sous-jacentes ou liées à l’objet
+d’un audit par l’analyse, la modélisation et la visualisation de la
+planification ou de l’exécution de l’audit ».</p>
+</blockquote>
+<p>Les ADA sont pertinentes dans toutes les phases de l’audit. La technique
+du DA peut s’appliquer, en fonction du jugement professionnel de
+l’auditeur, à chaque étape de l’audit, à savoir aussi bien lors :</p>
+<p>• De la planification de l’audit ;</p>
+<p>• Des tests de procédures ;</p>
+<p>• Des contrôles de substance ;</p>
+<p>• De l’évaluation des résultats.</p>
+<p><strong>Exploration des Données Analysées</strong> (EDA) va permettre à l’auditeur
+analyser de façon exhaustive les transactions, il lui est possible
+d’obtenir des indicateurs sur le risque d’anomalies significatives.</p>
+<blockquote>
+<p>EDA ou L’Exploration des Données Analysées est une technique assimilée
+au DA qui consiste en une approche d’analyse d’un ensemble de données
+afin de résumer les principales caractéristiques, à l’aide d’une
+méthode visuelle et des résumés statistiques. De cette manière,
+l’auditeur peut se faire une première idée générale des informations
+contenues dans les données, dans le but d’obtenir les renseignements
+préliminaires liés à ces données.</p>
+</blockquote>
+<p>L’EDA permet à l’auditeur de :</p>
+<p>• Mieux comprendre l’entité auditée ;</p>
+<p>• Identifier les risques d’anomalies éventuelles ;</p>
+<p>• Influencer l’audit afin de se concentrer davantage sur les zones à
+risque.</p>
+<p>Pour en savoir plus :</p>
+<ul>
+<li>Aicpa, <a href="https://us.aicpa.org/interestareas/frc/assuranceadvisoryservices/auditdatastandards">Audit Data Analytics avec
+Python</a>,</li>
+</ul>
+<!-- -->
+<ul>
+<li>Universalcpar: <a href="https://www.universalcpareview.com/ask-joey/what-is-audit-data-analytics-ada/">C’est quoi ADA
+?</a>-</li>
+</ul>
+<!-- -->
+<ul>
+<li>Rutgers : <a href="http://raw.rutgers.edu/docs/wcars/28wcars/28wcars%20presentations/Qi%20Liu_28wcars.pdf">Application EDA dans
+l’audit</a>,</li>
+</ul>
+<div id="application-eda-à-laide-package-summarytools" class="section level4">
+<h4>Application EDA à l’aide package summarytools</h4>
+<pre class="r"><code>library(summarytools)
+library(tidyverse)</code></pre>
+<pre class="r"><code>data %&gt;% glimpse()</code></pre>
+<pre><code>## Rows: 236,453
+## Columns: 19
+## $ X1  &lt;chr&gt; &quot;10037934555&quot;, &quot;10041634410&quot;, &quot;10041634410&quot;, &quot;10041912950&quot;, &quot;10041~
+## $ X2  &lt;chr&gt; &quot;F1512128952&quot;, &quot;F1512128969&quot;, &quot;F1512128969&quot;, &quot;F1512128970&quot;, &quot;F1512~
+## $ X3  &lt;chr&gt; &quot;AMANSAG&quot;, &quot;BELOUALI&quot;, &quot;BELOUALI&quot;, &quot;BELOUALI&quot;, &quot;BELOUALI&quot;, &quot;BENLEM~
+## $ X4  &lt;chr&gt; &quot;SALAHEDDINE&quot;, &quot;RAFIQ&quot;, &quot;RAFIQ&quot;, &quot;RAFIQ&quot;, &quot;RAFIQ&quot;, &quot;HAITAM&quot;, &quot;HAIT~
+## $ X5  &lt;chr&gt; &quot;C_RM&quot;, &quot;SOHO_B&quot;, &quot;SOHO_B&quot;, &quot;SOHO_B&quot;, &quot;SOHO_B&quot;, &quot;C_RM&quot;, &quot;C_RM&quot;, &quot;S~
+## $ X6  &lt;chr&gt; &quot;MOB02&quot;, &quot;MOB02&quot;, &quot;MOB02&quot;, &quot;MOB02&quot;, &quot;MOB02&quot;, &quot;MOB02&quot;, &quot;MOB02&quot;, &quot;MO~
+## $ X7  &lt;chr&gt; &quot;Offre Mobile B2C (Pizza)&quot;, &quot;Offre Mobile B2C (Pizza)&quot;, &quot;Offre Mob~
+## $ X8  &lt;chr&gt; &quot;ABPRN&quot;, &quot;ABPRN&quot;, &quot;BTAR1&quot;, &quot;ABPRN&quot;, &quot;BTAR1&quot;, &quot;ABPRN&quot;, &quot;BTAR1&quot;, &quot;AB~
+## $ X9  &lt;chr&gt; &quot;Abonnement principal&quot;, &quot;Abonnement principal&quot;, &quot;Bande Tarifaire 1~
+## $ X10 &lt;chr&gt; &quot;ALIZA&quot;, &quot;ALIZA&quot;, &quot;VOIX&quot;, &quot;ALIZA&quot;, &quot;VOIX&quot;, &quot;ALIZA&quot;, &quot;VOIX&quot;, &quot;ALIZA~
+## $ X11 &lt;chr&gt; &quot;Abonnement Forfait&quot;, &quot;Abonnement Forfait&quot;, &quot;VOIX&quot;, &quot;Abonnement Fo~
+## $ X12 &lt;dbl&gt; 165.83333, 82.50000, 75.00000, 82.50000, 83.33333, 132.50000, 20.8~
+## $ X13 &lt;dbl&gt; 199, 99, 90, 99, 100, 159, 25, 199, 159, 199, 125, 99, 99, 189, 19~
+## $ X14 &lt;chr&gt; &quot;MAD&quot;, &quot;MAD&quot;, &quot;MAD&quot;, &quot;MAD&quot;, &quot;MAD&quot;, &quot;MAD&quot;, &quot;MAD&quot;, &quot;MAD&quot;, &quot;MAD&quot;, &quot;MA~
+## $ X15 &lt;dbl&gt; 20151218, 20151218, 20151218, 20151218, 20151218, 20151218, 201512~
+## $ X16 &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ~
+## $ X17 &lt;chr&gt; &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;, &quot;~
+## $ X18 &lt;dbl&gt; 7.12e+15, 7.12e+15, 7.12e+15, 7.12e+15, 7.12e+15, 7.12e+15, 7.12e+~
+## $ X19 &lt;chr&gt; &quot;COM01&quot;, &quot;COM01&quot;, &quot;COM01&quot;, &quot;COM01&quot;, &quot;COM01&quot;, &quot;COM01&quot;, &quot;COM01&quot;, &quot;CO~</code></pre>
+</div>
+<div id="réalisation-dune-table-descriptive" class="section level4">
+<h4>Réalisation d’une table descriptive,</h4>
+<pre class="r"><code>library(summarytools)
+print(dfSummary(data %&gt;% select(5:14), graph.magnif = .7), method = &quot;render&quot;)</code></pre>
+<div class="container st-container">
+<h3>Data Frame Summary</h3>
+<h4></h4>
+<strong>Dimensions</strong>: 236453 x 10
+  <br/><strong>Duplicates</strong>: 227891
+<br/>
+<table class="table table-striped table-bordered st-table st-table-striped st-table-bordered st-multiline ">
+  <thead>
+    <tr>
+      <th align="center" class="st-protect-top-border"><strong>No</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Variable</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Stats / Values</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Freqs (% of Valid)</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Graph</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Valid</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Missing</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center">1</td>
+      <td align="left">X5
+[character]</td>
+      <td align="left">1. SOHO_B
+2. C_RM
+3. C_RE
+4. C_RN
+5. C_P
+6. SOHO_S
+7. C_SO
+8. SOHO_V
+9. C_V
+10. XXX_BATMAN
+[ 16 others ]</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">118441</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">50.1%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">83049</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">35.1%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">18178</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">7.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">7143</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">3.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">5215</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">2.2%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2067</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.9%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">858</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.4%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">556</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.2%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">509</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.2%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">141</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.1%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">296</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.1%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAEEAAAC8BAMAAADV1d6xAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5gQTAQM4uQiN5AAAAI5JREFUWMPt0tEJgDAMBNCO4G1g2w10/938ESxKjNBAk3r3/QgJl5T8pIhZT1F3KRQjhd4cxCyfxXN6vonnphQxhN6t1QflV1Gb3SgiCb1biLlmaKJuFDGF3i3QL4QXbDelCCr0boF+USimFTAQmeLHAgbCyy0UIwQMZlDMK2AgvNxCMULAQHi5hcJeeMgBNgOiqXM1968AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMDQtMTlUMDE6MDM6NTYrMDA6MDCM6D7VAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTA0LTE5VDAxOjAzOjU2KzAwOjAw/bWGaQAAAABJRU5ErkJggg=="></td>
+      <td align="center">236453
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">2</td>
+      <td align="left">X6
+[character]</td>
+      <td align="left">1. MOB02
+2. MOB01
+3. DAT01
+4. RPOCC
+5. DEG01
+6. OGEM3
+7. OGEM1
+8. GMTPE
+9. DEG03
+10. OGEM5
+[ 4 others ]</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">204820</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">86.6%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">16222</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">6.9%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10599</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">4.5%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3205</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">1.4%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1483</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.6%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">97</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">7</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">6</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAGcAAAC8BAMAAACXlq0mAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5gQTAQM4uQiN5AAAAI1JREFUaN7t00EKgCAUhGGPUDdIvYHe/24VtGgh4jyTUP7ZfzyUGefWTFByPChmISDQh8hU2F3J1oPuqzK6PiKBQNMgU8ubQTcKwesoZhBoImRqebt4XwKBQCWkmD7kQSBQCSmGEYJAdaQY9gQCDUCKYYQg0ACkmFneBAL9hRTDCEGgAUgxjBAEqqPVcgKUxITvqIWxmwAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0wNC0xOVQwMTowMzo1NiswMDowMIzoPtUAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMDQtMTlUMDE6MDM6NTYrMDA6MDD9tYZpAAAAAElFTkSuQmCC"></td>
+      <td align="center">236453
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">3</td>
+      <td align="left">X7
+[character]</td>
+      <td align="left">1. Offre Mobile B2C (Pizza)
+2. Offre Mobile B2C (Starwar
+3. OFFRE INTERNET CLIENTS B2
+4. Plan tarifaire OCC
+5. Offre degroupage ADSL B2C
+6. NA
+7. NA
+8. Offres GSM TPE B2B
+9. NA
+10. NA
+[ 4 others ]</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">204820</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">86.6%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">16222</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">6.9%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10599</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">4.5%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3205</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">1.4%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1483</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.6%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">97</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">7</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">2</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">6</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAGcAAAC8BAMAAACXlq0mAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5gQTAQM4uQiN5AAAAI1JREFUaN7t00EKgCAUhGGPUDdIvYHe/24VtGgh4jyTUP7ZfzyUGefWTFByPChmISDQh8hU2F3J1oPuqzK6PiKBQNMgU8ubQTcKwesoZhBoImRqebt4XwKBQCWkmD7kQSBQCSmGEYJAdaQY9gQCDUCKYYQg0ACkmFneBAL9hRTDCEGgAUgxjBAEqqPVcgKUxITvqIWxmwAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0wNC0xOVQwMTowMzo1NiswMDowMIzoPtUAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMDQtMTlUMDE6MDM6NTYrMDA6MDD9tYZpAAAAAElFTkSuQmCC"></td>
+      <td align="center">236453
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">4</td>
+      <td align="left">X8
+[character]</td>
+      <td align="left">1. ABOPT
+2. ABPRA
+3. ABPRN
+4. APRNF
+5. BLACK
+6. BTAR1
+7. BTAR3
+8. OGPRS
+9. OPGSM
+10. SBASE
+11. SPOCC</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">316</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.1%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">112</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">176687</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">74.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1454</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.6%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">60</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">16681</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">7.1%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1018</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.4%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">12463</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">5.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">19608</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">8.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">45</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">8009</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">3.4%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAFsAAAC8BAMAAADlWc+QAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5gQTAQM4uQiN5AAAAJ1JREFUaN7t1cEJgDAQRFFL0A6M6cD035sKXjw5s0HZwN/zIyQwm5mmsacs0sxw+D9c01Ge6qlweK712LRZb16bNHB4lJuJNPOearXh8Fx1kOqpcHiu9biKx+Bn8+1wuMPNiAm0gxc4fGSu6Y46cHiVPgI4PMzNRCr2efpWnLu3Bod/yM1EvsseLlwEDs/LNR1vD4tXqfjg8HDERp0DkzRAyjQ+VCoAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMDQtMTlUMDE6MDM6NTYrMDA6MDCM6D7VAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTA0LTE5VDAxOjAzOjU2KzAwOjAw/bWGaQAAAABJRU5ErkJggg=="></td>
+      <td align="center">236453
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">5</td>
+      <td align="left">X9
+[character]</td>
+      <td align="left">1. Abonnement options
+2. Abonnement principal
+3. Abonnement principal - Au
+4. Abonnement principal Fixe
+5. Bande Tarifaire 1
+6. Bande Tarifaire 3
+7. OCC - Charges ponctuelles
+8. Options GPRS
+9. Options payantes GSM
+10. Services Blackberry
+11. Services de Base</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">316</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.1%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">176687</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">74.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">112</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1454</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.6%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">16681</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">7.1%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1018</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.4%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">8009</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">3.4%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">12463</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">5.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">19608</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">8.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">60</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">45</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAFsAAAC8BAMAAADlWc+QAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5gQTAQM4uQiN5AAAAJ1JREFUaN7t1rENgDAMRFFGgA0IbED23w0KGiruHAU56F/9hIx0ljNNY6csUmY4/Buu6SjftKw336sUODzKzUb2XY++qw2H57oeqWaHw/O9lgx+Xb4DDu/IzUYKtIEXODwV13T8HFh8VxYbDo9zs5ESbnktWb8qHT44PMzNRir2+fWtOLPXCod35GYj32ULFwaBw/NyTbMe8H/wUXMCLalBVElbBL4AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMDQtMTlUMDE6MDM6NTYrMDA6MDCM6D7VAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTA0LTE5VDAxOjAzOjU2KzAwOjAw/bWGaQAAAABJRU5ErkJggg=="></td>
+      <td align="center">236453
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">6</td>
+      <td align="left">X10
+[character]</td>
+      <td align="left">1. ALIZA
+2. VOIX
+3. OPFPY
+4. OMB02
+5. APAVP
+6. AEVDO
+7. RLIZA
+8. RPAVP
+9. CPLI1
+10. OFFF1
+[ 55 others ]</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">145408</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">61.5%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">17030</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">7.2%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">15529</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">6.6%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">12044</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">5.1%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">9819</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">4.2%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">9238</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">3.9%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">5492</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">2.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">5275</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">2.2%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3904</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">1.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3181</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">1.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">9533</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">4.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAE0AAAC8BAMAAADP6T4/AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5gQTAQM4uQiN5AAAAIhJREFUWMPt10EKgCAURdGW0NtB5g5s/3uroEGj/v+hqHDf+CAJl8BlGX+7se1x+fgebm7n7UDG1qC7z/a46x4Fh/P2ImN0imvpandqHPf6voLDuXuRsXinyXkPHM7fi4zRKe6P69Zf8rmMwwV6keo6OsX17JT+cFP8J3G4Bk6VHe8eXKSDkXcC3BblAFY0JWcAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMDQtMTlUMDE6MDM6NTYrMDA6MDCM6D7VAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTA0LTE5VDAxOjAzOjU2KzAwOjAw/bWGaQAAAABJRU5ErkJggg=="></td>
+      <td align="center">236453
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">7</td>
+      <td align="left">X11
+[character]</td>
+      <td align="left">1. Abonnement Forfait
+2. VOIX
+3. Option plafonnement Payan
+4. Abonnement Mobile browsin
+5. Forfaits avec plafond
+6. Abonnement EVDO
+7. Remise sur Abonnement For
+8. Remise sur Forfaits avec 
+9. Produit libre 1
+10. NA
+[ 53 others ]</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">145408</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">61.5%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">17030</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">7.2%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">15529</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">6.6%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">12044</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">5.1%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">9819</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">4.2%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">9238</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">3.9%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">5492</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">2.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">5275</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">2.2%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3904</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">1.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">3181</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">1.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">9533</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">4.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAE0AAAC8BAMAAADP6T4/AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5gQTAQM4uQiN5AAAAIhJREFUWMPt10EKgCAURdGW0NtB5g5s/3uroEGj/v+hqHDf+CAJl8BlGX+7se1x+fgebm7n7UDG1qC7z/a46x4Fh/P2ImN0imvpandqHPf6voLDuXuRsXinyXkPHM7fi4zRKe6P69Zf8rmMwwV6keo6OsX17JT+cFP8J3G4Bk6VHe8eXKSDkXcC3BblAFY0JWcAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMDQtMTlUMDE6MDM6NTYrMDA6MDCM6D7VAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTA0LTE5VDAxOjAzOjU2KzAwOjAw/bWGaQAAAABJRU5ErkJggg=="></td>
+      <td align="center">236453
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">8</td>
+      <td align="left">X12
+[numeric]</td>
+      <td align="left">Mean (sd) : 91.6 (112.5)
+min < med < max:
+-4666.5 < 82.5 < 1991.8
+IQR (CV) : 95 (1.2)</td>
+      <td align="left" style="vertical-align:middle">5232 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5gQTAQM4uQiN5AAAAFJJREFUWMPt17ENgDAMRFGPAEwAlw24/XcLNEgUUQJFCuv/zsVrrnNE/tZum6TjuZZxZxuHw+FwOBwOh8PhcJPd9cPpjyv2iWu6e9a308f2yF8FMIcNohIC/GUAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMDQtMTlUMDE6MDM6NTYrMDA6MDCM6D7VAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTA0LTE5VDAxOjAzOjU2KzAwOjAw/bWGaQAAAABJRU5ErkJggg=="></td>
+      <td align="center">236453
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">9</td>
+      <td align="left">X13
+[numeric]</td>
+      <td align="left">Mean (sd) : 109.9 (135)
+min < med < max:
+-5599.8 < 99 < 2390.2
+IQR (CV) : 114 (1.2)</td>
+      <td align="left" style="vertical-align:middle">5143 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5gQTAQM5zg+9cgAAAE1JREFUWMPt16sNACAMRdGOABtAGaH770YdCQnhIxDNva7imOcqEr+8TVXruNKxa2Y4HA6Hw+FwOBwOh/vt/Il7co5wS+erzk4vKxK/DlD9CCvC7fKrAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIyLTA0LTE5VDAxOjAzOjU3KzAwOjAwKp81YQAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMi0wNC0xOVQwMTowMzo1NyswMDowMFvCjd0AAAAASUVORK5CYII="></td>
+      <td align="center">236453
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">10</td>
+      <td align="left">X14
+[character]</td>
+      <td align="left">1. MAD</td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">236453</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">100.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent"><img style="border:none;background-color:transparent;padding:0" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAHUAAAAXCAQAAACfMchmAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0QA/4ePzL8AAAAHdElNRQfmBBMBAznOD71yAAAAYElEQVRYw+3XQQoAEBCF4Rk5nRs4oRvM9diibFDy5n272chfFFrFi/B6A0xl6onYDwXu4mZdpIqk13u7yobJ0QFmKiKmImIqIqYiYioiR6nTc9/2VvmCwv3blhwdYKYiapF5Becy9uLlAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIyLTA0LTE5VDAxOjAzOjU3KzAwOjAwKp81YQAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMi0wNC0xOVQwMTowMzo1NyswMDowMFvCjd0AAAAASUVORK5CYII="></td>
+      <td align="center">236453
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+  </tbody>
+</table>
+<p>Generated by <a href='https://github.com/dcomtois/summarytools'>summarytools</a> 0.9.8 (<a href='https://www.r-project.org/'>R</a> version 4.0.3)<br/>2022-04-19</p>
+</div>
+</div>
+<div id="réalisation-dune-table-de-contingence" class="section level4">
+<h4>Réalisation d’une table de contingence</h4>
+<pre class="r"><code>(data_by_X5 &lt;- stby(
+  data = data,
+  INDICES = data$X5,
+  FUN = descr,
+  stats = &quot;common&quot;,
+  transpose = TRUE
+))</code></pre>
+<pre><code>## Descriptive Statistics  
+## data  
+## Group: X5 = C_P  
+## N: 5215  
+## 
+##                            Mean            Std.Dev                   Min                Median
+## --------- --------------------- ------------------ --------------------- ---------------------
+##       X12                 78.17              94.82               -472.50                 73.33
+##       X13                 93.80             113.78               -567.00                 88.00
+##       X15           20151218.00               0.00           20151218.00           20151218.00
+##       X16                  1.00               0.00                  1.00                  1.00
+##       X18   7119894534995206.00   1021629737316.52   7110000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12               1991.80   5215.00      100.00
+##       X13               2390.16   5215.00      100.00
+##       X15           20151218.00   5215.00      100.00
+##       X16                  1.00   5215.00      100.00
+##       X18   7120000000000000.00   5215.00      100.00
+## 
+## Group: X5 = C_RE  
+## N: 18178  
+## 
+##                            Mean            Std.Dev                   Min                Median
+## --------- --------------------- ------------------ --------------------- ---------------------
+##       X12                 74.59              96.14              -1329.16                 73.33
+##       X13                 89.51             115.37              -1594.99                 88.00
+##       X15           20151218.00               0.00           20151218.00           20151218.00
+##       X16                  1.00               0.00                  1.00                  1.00
+##       X18   7119893827703818.00   1024943020578.24   7110000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max    N.Valid   Pct.Valid
+## --------- --------------------- ---------- -----------
+##       X12               1954.17   18178.00      100.00
+##       X13               2345.00   18178.00      100.00
+##       X15           20151218.00   18178.00      100.00
+##       X16                  1.00   18178.00      100.00
+##       X18   7120000000000000.00   18178.00      100.00
+## 
+## Group: X5 = C_RM  
+## N: 83049  
+## 
+##                            Mean            Std.Dev                   Min                Median
+## --------- --------------------- ------------------ --------------------- ---------------------
+##       X12                 88.73             109.23              -4666.48                 82.50
+##       X13                106.47             131.07              -5599.78                 99.00
+##       X15           20151218.00               0.00           20151218.00           20151218.00
+##       X16                  1.00               0.00                  1.00                  1.00
+##       X18   7119897169141109.00   1008834306582.78   7110000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max    N.Valid   Pct.Valid
+## --------- --------------------- ---------- -----------
+##       X12               1980.33   83049.00      100.00
+##       X13               2376.40   83049.00      100.00
+##       X15           20151218.00   83049.00      100.00
+##       X16                  1.00   83049.00      100.00
+##       X18   7120000000000000.00   83049.00      100.00
+## 
+## Group: X5 = C_RN  
+## N: 7143  
+## 
+##                            Mean           Std.Dev                   Min                Median
+## --------- --------------------- ----------------- --------------------- ---------------------
+##       X12                 71.69            115.83               -693.89                 75.00
+##       X13                 86.03            139.00               -832.67                 90.00
+##       X15           20151218.00              0.00           20151218.00           20151218.00
+##       X16                  1.00              0.00                  1.00                  1.00
+##       X18   7119930001399972.00   833776660755.41   7110000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12               1826.00   7143.00      100.00
+##       X13               2191.20   7143.00      100.00
+##       X15           20151218.00   7143.00      100.00
+##       X16                  1.00   7143.00      100.00
+##       X18   7120000000000000.00   7143.00      100.00
+## 
+## Group: X5 = C_SO  
+## N: 858  
+## 
+##                            Mean           Std.Dev                   Min                Median
+## --------- --------------------- ----------------- --------------------- ---------------------
+##       X12                 72.47            123.25               -207.50                 82.50
+##       X13                 86.97            147.90               -249.00                 99.00
+##       X15           20151218.00              0.00           20151218.00           20151218.00
+##       X16                  1.00              0.00                  1.00                  1.00
+##       X18   7119941724941725.00   761597417737.92   7110000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                810.35    858.00      100.00
+##       X13                972.42    858.00      100.00
+##       X15           20151218.00    858.00      100.00
+##       X16                  1.00    858.00      100.00
+##       X18   7120000000000000.00    858.00      100.00
+## 
+## Group: X5 = C_SR  
+## N: 40  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                 92.68     85.78                -82.50                 82.50
+##       X13                111.22    102.94                -99.00                 99.00
+##       X15           20151218.00      0.00           20151218.00           20151218.00
+##       X16                  1.00      0.00                  1.00                  1.00
+##       X18   7120000000000000.00      0.00   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                408.33     40.00      100.00
+##       X13                490.00     40.00      100.00
+##       X15           20151218.00     40.00      100.00
+##       X16                  1.00     40.00      100.00
+##       X18   7120000000000000.00     40.00      100.00
+## 
+## Group: X5 = C_V  
+## N: 509  
+## 
+##                            Mean            Std.Dev                   Min                Median
+## --------- --------------------- ------------------ --------------------- ---------------------
+##       X12                 98.94             130.37               -181.25                 82.50
+##       X13                118.73             156.44               -217.50                 99.00
+##       X15           20151218.00               0.00           20151218.00           20151218.00
+##       X16                  1.00               0.00                  1.00                  1.00
+##       X18   7119823182711198.00   1319214783757.66   7110000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12               1370.83    509.00      100.00
+##       X13               1645.00    509.00      100.00
+##       X15           20151218.00    509.00      100.00
+##       X16                  1.00    509.00      100.00
+##       X18   7120000000000000.00    509.00      100.00
+## 
+## Group: X5 = D_B  
+## N: 62  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                 79.64     83.12                -58.12                 77.92
+##       X13                 95.57     99.75                -69.75                 93.50
+##       X15           20151218.00      0.00           20151218.00           20151218.00
+##       X16                  1.00      0.00                  1.00                  1.00
+##       X18   7120000000000000.00      0.00   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                508.06     62.00      100.00
+##       X13                609.68     62.00      100.00
+##       X15           20151218.00     62.00      100.00
+##       X16                  1.00     62.00      100.00
+##       X18   7120000000000000.00     62.00      100.00
+## 
+## Group: X5 = D_G  
+## N: 17  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                 86.13     71.33                -18.33                 82.50
+##       X13                103.35     85.59                -22.00                 99.00
+##       X15           20151218.00      0.00           20151218.00           20151218.00
+##       X16                  1.00      0.00                  1.00                  1.00
+##       X18   7120000000000000.00      0.00   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                266.67     17.00      100.00
+##       X13                320.00     17.00      100.00
+##       X15           20151218.00     17.00      100.00
+##       X16                  1.00     17.00      100.00
+##       X18   7120000000000000.00     17.00      100.00
+## 
+## Group: X5 = D_S  
+## N: 18  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                 68.36     47.48                -35.75                 82.50
+##       X13                 82.03     56.98                -42.90                 99.00
+##       X15           20151218.00      0.00           20151218.00           20151218.00
+##       X16                  1.00      0.00                  1.00                  1.00
+##       X18   7120000000000000.00      0.00   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                166.67     18.00      100.00
+##       X13                200.00     18.00      100.00
+##       X15           20151218.00     18.00      100.00
+##       X16                  1.00     18.00      100.00
+##       X18   7120000000000000.00     18.00      100.00
+## 
+## Group: X5 = D_V  
+## N: 14  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                 71.67     53.72                  8.33                 73.33
+##       X13                 86.00     64.46                 10.00                 88.00
+##       X15           20151218.00      0.00           20151218.00           20151218.00
+##       X16                  1.00      0.00                  1.00                  1.00
+##       X18   7120000000000000.00      0.00   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                166.67     14.00      100.00
+##       X13                200.00     14.00      100.00
+##       X15           20151218.00     14.00      100.00
+##       X16                  1.00     14.00      100.00
+##       X18   7120000000000000.00     14.00      100.00
+## 
+## Group: X5 = GCVD_ADM  
+## N: 3  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                 54.17    129.35                -87.00                 82.50
+##       X13                 65.00    155.22               -104.40                 99.00
+##       X15           20151218.00      0.00           20151218.00           20151218.00
+##       X16                  1.00      0.00                  1.00                  1.00
+##       X18   7120000000000000.00      0.00   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                167.00      3.00      100.00
+##       X13                200.40      3.00      100.00
+##       X15           20151218.00      3.00      100.00
+##       X16                  1.00      3.00      100.00
+##       X18   7120000000000000.00      3.00      100.00
+## 
+## Group: X5 = GCVD_CLBR  
+## N: 2  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                 82.50      0.00                 82.50                 82.50
+##       X13                 99.00      0.00                 99.00                 99.00
+##       X15           20151218.00      0.00           20151218.00           20151218.00
+##       X16                  1.00      0.00                  1.00                  1.00
+##       X18   7120000000000000.00      0.00   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                 82.50      2.00      100.00
+##       X13                 99.00      2.00      100.00
+##       X15           20151218.00      2.00      100.00
+##       X16                  1.00      2.00      100.00
+##       X18   7120000000000000.00      2.00      100.00
+## 
+## Group: X5 = GT_B  
+## N: 11  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                 60.61     47.23                 16.67                 33.33
+##       X13                 72.73     56.67                 20.00                 40.00
+##       X15           20151218.00      0.00           20151218.00           20151218.00
+##       X16                  1.00      0.00                  1.00                  1.00
+##       X18   7120000000000000.00      0.00   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                165.83     11.00      100.00
+##       X13                199.00     11.00      100.00
+##       X15           20151218.00     11.00      100.00
+##       X16                  1.00     11.00      100.00
+##       X18   7120000000000000.00     11.00      100.00
+## 
+## Group: X5 = GT_G  
+## N: 10  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                 53.17     36.43                 16.67                 41.67
+##       X13                 63.80     43.71                 20.00                 50.00
+##       X15           20151218.00      0.00           20151218.00           20151218.00
+##       X16                  1.00      0.00                  1.00                  1.00
+##       X18   7120000000000000.00      0.00   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                104.17     10.00      100.00
+##       X13                125.00     10.00      100.00
+##       X15           20151218.00     10.00      100.00
+##       X16                  1.00     10.00      100.00
+##       X18   7120000000000000.00     10.00      100.00
+## 
+## Group: X5 = GT_S  
+## N: 1  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                290.83        NA                290.83                290.83
+##       X13                349.00        NA                349.00                349.00
+##       X15           20151218.00        NA           20151218.00           20151218.00
+##       X16                  1.00        NA                  1.00                  1.00
+##       X18   7120000000000000.00        NA   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                290.83      1.00      100.00
+##       X13                349.00      1.00      100.00
+##       X15           20151218.00      1.00      100.00
+##       X16                  1.00      1.00      100.00
+##       X18   7120000000000000.00      1.00      100.00
+## 
+## Group: X5 = PMVI_PME  
+## N: 22  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                 85.83    214.90               -600.00                 82.50
+##       X13                103.00    257.88               -720.00                 99.00
+##       X15           20151218.00      0.00           20151218.00           20151218.00
+##       X16                  1.00      0.00                  1.00                  1.00
+##       X18   7120000000000000.00      0.00   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                600.00     22.00      100.00
+##       X13                720.00     22.00      100.00
+##       X15           20151218.00     22.00      100.00
+##       X16                  1.00     22.00      100.00
+##       X18   7120000000000000.00     22.00      100.00
+## 
+## Group: X5 = PMVI_TPE  
+## N: 6  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                 77.50      3.87                 75.00                 75.00
+##       X13                 93.00      4.65                 90.00                 90.00
+##       X15           20151218.00      0.00           20151218.00           20151218.00
+##       X16                  1.00      0.00                  1.00                  1.00
+##       X18   7120000000000000.00      0.00   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                 82.50      6.00      100.00
+##       X13                 99.00      6.00      100.00
+##       X15           20151218.00      6.00      100.00
+##       X16                  1.00      6.00      100.00
+##       X18   7120000000000000.00      6.00      100.00
+## 
+## Group: X5 = PT_S  
+## N: 1  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                 82.50        NA                 82.50                 82.50
+##       X13                 99.00        NA                 99.00                 99.00
+##       X15           20151218.00        NA           20151218.00           20151218.00
+##       X16                  1.00        NA                  1.00                  1.00
+##       X18   7120000000000000.00        NA   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                 82.50      1.00      100.00
+##       X13                 99.00      1.00      100.00
+##       X15           20151218.00      1.00      100.00
+##       X16                  1.00      1.00      100.00
+##       X18   7120000000000000.00      1.00      100.00
+## 
+## Group: X5 = SD_S  
+## N: 6  
+## 
+##                            Mean            Std.Dev                   Min                Median
+## --------- --------------------- ------------------ --------------------- ---------------------
+##       X12                161.64             230.23                 16.67                 88.75
+##       X13                193.97             276.28                 20.00                106.50
+##       X15           20151218.00               0.00           20151218.00           20151218.00
+##       X16                  1.00               0.00                  1.00                  1.00
+##       X18   7118333333333333.00   4082482904638.63   7110000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                622.33      6.00      100.00
+##       X13                746.80      6.00      100.00
+##       X15           20151218.00      6.00      100.00
+##       X16                  1.00      6.00      100.00
+##       X18   7120000000000000.00      6.00      100.00
+## 
+## Group: X5 = SOHO_B  
+## N: 118441  
+## 
+##                            Mean           Std.Dev                   Min                Median
+## --------- --------------------- ----------------- --------------------- ---------------------
+##       X12                 98.10            116.68              -3152.28                 82.50
+##       X13                117.71            140.02              -3782.74                 99.00
+##       X15           20151218.00              0.00           20151218.00           20151218.00
+##       X16                  1.00              0.00                  1.00                  1.00
+##       X18   7119946555669067.00   729103217011.86   7110000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max     N.Valid   Pct.Valid
+## --------- --------------------- ----------- -----------
+##       X12               1952.67   118441.00      100.00
+##       X13               2343.20   118441.00      100.00
+##       X15           20151218.00   118441.00      100.00
+##       X16                  1.00   118441.00      100.00
+##       X18   7120000000000000.00   118441.00      100.00
+## 
+## Group: X5 = SOHO_G  
+## N: 81  
+## 
+##                            Mean            Std.Dev                   Min                Median
+## --------- --------------------- ------------------ --------------------- ---------------------
+##       X12                 88.14              86.83               -103.96                 82.50
+##       X13                105.77             104.19               -124.75                 99.00
+##       X15           20151218.00               0.00           20151218.00           20151218.00
+##       X16                  1.00               0.00                  1.00                  1.00
+##       X18   7119876543209877.00   1111111111111.11   7110000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                415.83     81.00      100.00
+##       X13                499.00     81.00      100.00
+##       X15           20151218.00     81.00      100.00
+##       X16                  1.00     81.00      100.00
+##       X18   7120000000000000.00     81.00      100.00
+## 
+## Group: X5 = SOHO_S  
+## N: 2067  
+## 
+##                            Mean            Std.Dev                   Min                Median
+## --------- --------------------- ------------------ --------------------- ---------------------
+##       X12                 91.99             112.68               -135.21                 82.50
+##       X13                110.39             135.22               -162.25                 99.00
+##       X15           20151218.00               0.00           20151218.00           20151218.00
+##       X16                  1.00               0.00                  1.00                  1.00
+##       X18   7119869375907112.00   1135694621132.21   7110000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12               1592.00   2067.00      100.00
+##       X13               1910.40   2067.00      100.00
+##       X15           20151218.00   2067.00      100.00
+##       X16                  1.00   2067.00      100.00
+##       X18   7120000000000000.00   2067.00      100.00
+## 
+## Group: X5 = SOHO_V  
+## N: 556  
+## 
+##                            Mean            Std.Dev                   Min                Median
+## --------- --------------------- ------------------ --------------------- ---------------------
+##       X12                 96.40             103.05                -82.50                 82.50
+##       X13                115.69             123.67                -99.00                 99.00
+##       X15           20151218.00               0.00           20151218.00           20151218.00
+##       X16                  1.00               0.00                  1.00                  1.00
+##       X18   7119820143884892.00   1330186187935.79   7110000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12               1020.83    556.00      100.00
+##       X13               1225.00    556.00      100.00
+##       X15           20151218.00    556.00      100.00
+##       X16                  1.00    556.00      100.00
+##       X18   7120000000000000.00    556.00      100.00
+## 
+## Group: X5 = WANA_PDV  
+## N: 2  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                165.83      0.00                165.83                165.83
+##       X13                199.00      0.00                199.00                199.00
+##       X15           20151218.00      0.00           20151218.00           20151218.00
+##       X16                  1.00      0.00                  1.00                  1.00
+##       X18   7120000000000000.00      0.00   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                165.83      2.00      100.00
+##       X13                199.00      2.00      100.00
+##       X15           20151218.00      2.00      100.00
+##       X16                  1.00      2.00      100.00
+##       X18   7120000000000000.00      2.00      100.00
+## 
+## Group: X5 = XXX_BATMAN  
+## N: 141  
+## 
+##                            Mean   Std.Dev                   Min                Median
+## --------- --------------------- --------- --------------------- ---------------------
+##       X12                 39.29    217.60               -857.83                  8.33
+##       X13                 47.15    261.12              -1029.40                 10.00
+##       X15           20151218.00      0.00           20151218.00           20151218.00
+##       X16                  1.00      0.00                  1.00                  1.00
+##       X18   7120000000000000.00      0.00   7120000000000000.00   7120000000000000.00
+## 
+## Table: Table continues below
+## 
+##  
+## 
+##                             Max   N.Valid   Pct.Valid
+## --------- --------------------- --------- -----------
+##       X12                729.03    141.00      100.00
+##       X13                874.84    141.00      100.00
+##       X15           20151218.00    141.00      100.00
+##       X16                  1.00    141.00      100.00
+##       X18   7120000000000000.00    141.00      100.00</code></pre>
+<div id="data-explorer" class="section level5">
+<h5>Data Explorer</h5>
+<pre class="r"><code>library(DataExplorer)
+plot_bar(data, ncol = 3, nrow = 1)</code></pre>
+<p><img src="/post/2022-04-11-eda-audit/index.en-us_files/figure-html/unnamed-chunk-6-1.png" width="1728" /><img src="/post/2022-04-11-eda-audit/index.en-us_files/figure-html/unnamed-chunk-6-2.png" width="1728" /><img src="/post/2022-04-11-eda-audit/index.en-us_files/figure-html/unnamed-chunk-6-3.png" width="1728" /><img src="/post/2022-04-11-eda-audit/index.en-us_files/figure-html/unnamed-chunk-6-4.png" width="1728" /></p>
+<pre class="r"><code>plot_bar(data, ncol = 2, nrow = 1, by = &quot;X5&quot;)</code></pre>
+<p><img src="/post/2022-04-11-eda-audit/index.en-us_files/figure-html/unnamed-chunk-7-1.png" width="672" /><img src="/post/2022-04-11-eda-audit/index.en-us_files/figure-html/unnamed-chunk-7-2.png" width="672" /><img src="/post/2022-04-11-eda-audit/index.en-us_files/figure-html/unnamed-chunk-7-3.png" width="672" /><img src="/post/2022-04-11-eda-audit/index.en-us_files/figure-html/unnamed-chunk-7-4.png" width="672" /><img src="/post/2022-04-11-eda-audit/index.en-us_files/figure-html/unnamed-chunk-7-5.png" width="672" /><img src="/post/2022-04-11-eda-audit/index.en-us_files/figure-html/unnamed-chunk-7-6.png" width="672" /></p>
+<pre class="r"><code># plot_histogram(X18_12_2015, ncol=3, nrow = 1, geom_histogram_args = list(bins = 10L),)
+plot_boxplot(data, by = &quot;X5&quot;)</code></pre>
+<p><img src="/post/2022-04-11-eda-audit/index.en-us_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+</div>
+</div>

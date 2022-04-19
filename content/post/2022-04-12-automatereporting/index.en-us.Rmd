@@ -1,0 +1,48 @@
+---
+title: R pour les Financiers - RPA des Reportings
+author: 'Mohammed Hafrate'
+date: '2022-04-12'
+slug: automateReporting
+categories: []
+tags: []
+keywords:
+  - tech
+subtitle: 
+summary: "Produire des Reportings Automatisés avec R Markdown"
+thumbnailImage: "/img/DAX/fuzzy.PNG"
+thumbnailImagePosition: left
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, tidy = "styler")
+```
+
+### Comment produire un rapport automatisé, reproductible et facile à actualiser ?
+
+**R Markdown** présente deux grands avantages. Premièrement, les rapports sont reproductibles, car le code source contient toutes les instructions nécessaires à la production des informations contenues dans le rapport. Deuxièmement, ils sont faciles à actualiser en cas de modification des données.
+
+Dans l'IDE de Rstudio, R Markdown prend en charge des dizaines de formats de outputs (rapports) statiques et dynamiques, y compris en PDF, document Word, document HTML et présentation PowerPoint interactive. Ceci est fait entièrement à partir d'un document R Markdown, ce qui nous permet d'exporter simultanément notre analyse dans divers produits
+
+**Le processus de production des Reportings**
+
+La production de Reportings est devenue une tâche courante dans de nombreuses Directions. Le Reporting consiste à fournir régulièrement des informations sur les données opérationnelles ou financières aux décideurs d'une organisation pour aide à la décision. La rédaction d'un rapport est souvent un processus long. Il implique le processus de collecte de données, d'analyse de données et de préparation de rapports, ce qui peut nous obliger à utiliser plusieurs logiciels à la fois avec une tâche très répétitive. Ce qui nous limite de se concentrer sur d'autre partie plus importante de notre entreprise.
+
+![](/img/DAX/flow_finance.png){width="208"}
+
+Le processus de production des Reporting consiste à
+
+**Import Data** : Recueillir des données provenant de diverses ressources et importer les données dans d'outils d'analyse (Excel / power Query / Tableau /R / Python...)
+
+**Data Cleaning** : Une fois les données importées, nous devons les nettoyer. Le nettoyage des données permet de stocker les données avec les étiquettes, les valeurs et la structure correctes de la manière dont elles doivent être stockées.
+
+**Data Transformation** : La transformation des données est le processus de conversion des données ou de l'information d'un format à un autre et améliorer la qualité des données... Cette étape peut être « simple » ou « complexe » selon les types de changements que les données doivent subir avant d'atteindre leur destination cible. Il s'agit habituellement de réduire les observations, joindre des données pour enrichir les données, filtrage, suppression des doublons...
+
+**Visualisation**, désigne le fait de représenter visuellement ses data pour pouvoir déceler et comprendre les informations, étant les données brutes sont difficilement interprétables et exploitables. Vous pouvons effectuer une analyse exploratoire des données (EDA)  à l'aide de statistiques descriptives et les visualiser au moyen de graphiques pour améliorer notre compréhension des données par exemple :diagrammes en secteur, tableau (avec textes ou nombres),  courbe avec tendance, histogramme, Boxplot, Nuage de points,... Vous pouvez également construire un modèle d'apprentissage automatique (Machine Learning) pour prédire les valeurs futures si besoin
+
+**Communication**, Ce dernier point est d'ailleurs crucial, le partage au sein de entreprise en temps réel grâce à l'automatisation pour les utiliser dans les prises de décisions
+
+pour en savoir plus,
+
+-   Documentation officiel de R Markdown : <https://bookdown.org/yihui/bookdown/>
+-   flexdashboard: <https://pkgs.rstudio.com/flexdashboard/articles/examples.html>
+-   Templates de Rstudio : <https://rmarkdown.rstudio.com/gallery.html>

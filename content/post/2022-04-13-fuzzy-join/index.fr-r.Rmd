@@ -1,0 +1,47 @@
+---
+title: Power query - Comment effectuer une recherche conditionnelle
+author: 'Mohammed Hafrate'
+date: '2022-04-13'
+slug: fuzzy_join
+categories: []
+tags: ["Power query"]
+
+summary: "faire une recherche fuzzy ou approximative du texte dans une liste"
+thumbnailImage: "/img/DAX/fuzzy.PNG"
+thumbnailImagePosition: left
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, tidy = "styler")
+```
+
+Comment faire une correspondance entre un mots contenus dans une colonne et une liste de valeurs?
+
+Supposons que nous disposons une table de GL avec une colonne libellée qui contient le nom du Client et une autre table avec deux colonnes, clients et type de client.
+
+#### Données de départ
+
+
+A partir d'une table de GL, on veut créer une recherche approximative du nom du client depuis la table des clients. le problème est que le nom du client est dans la colonne Libelle du GL, on ne peut pas n'est utilisé recherchev ni de fusionner les requêtes dans power query.
+
+![](/img/DAX/TableJoin.PNG)
+
+La solution est de définir une fonction personnalisée dans power query. On utilise Text.Contains pour chercher le nom du client depuis la table client et itérer sur l'ensemble des lignes de la table de GL avec Table.SelectRows()
+
+Ajouter une colonne personnalisée et passer le code ci-dessous :
+
+``` {.js}
+Table.SelectRows(Client, (x) => Text.Contains([libelles], x[Client]))
+```
+
+![](/img/DAX/PQ_addcolonne.PNG)
+
+Et voila le résultat final :)
+
+![](/img/DAX/FZ_tableFin.PNG)
+
+Certes, on peut améliorer la performance en introduisant la fonction
+Table.buffer ()

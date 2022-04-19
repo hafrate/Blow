@@ -7,52 +7,159 @@ categories:
   - Rstat
   - Database
   - Sqlite
-tags: ["Rstat", "Rsqlite"]
+tags: ["Rstat", "Rsqlite", "ODBC", "dplyr", "Database"]
 keywords:
   - tech
-subtitle : 'Rsqlite pour remplacer vos fichiers csv et Excel'
+subtitle : 'Manipuler les base de données depuis Rstudio'
 summary: "Rsqlite pour remplacer vos fichiers csv et Excel et ganger en effecience et productivité."
 thumbnailImage: "/img/sqlite.png"
 thumbnailImagePosition: left
-  
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, tidy = "styler")
 ```
 
-Je travaille dans le reporting et analyse de l'informations comptable et financiére, et pour tous les personnes qui travaillent dans ce domaine, sachent que nous nous appuyons
-principalement sur des feuilles Excel et des fichiers CSV pour nos besoins de stockage de données. 
+Au fur et à mesure que le nombre de fichiers Excel et CSV augmente, la gestion de ceux-ci devient un véritable challenge. 
 
-Ansi, Au fur et à mesure que le nombre de fichiers Excel et CSV augmente, la gestion de ceux-ci devient un véritable challenge. 
-
-Pour de tels scénarios, disposer d'un logiciel de base de données semble être une solution appropriée. Mais, en raison de facteurs tels que le coût et le délai de mise en service, et aussi d"appétence pour le SQL,*cette solution prend du recul*.
-
-La solution, c'est de disposer d'une database local et gratuite, *Sqlite*. L'intérêt c'est que c'est très léger et rapide à mettre en place, on peut s'en servir aussi bien pour stocker des données dans comme une vraie base de données commme les balances, GL, ventes, extraction... Avec l'avanatage de créer plusieurs Tables et y accéder facilement. 
+La solution, c'est de disposer d'une database local et gratuite, *Sqlite*. L'intérêt c'est que c'est très léger et rapide à mettre en place, on peut s'en servir aussi bien pour stocker des données dans comme une vraie base de données par exemple les balances, GL, ventes, extraction... Avec l'avantage de créer plusieurs Tables et y accéder facilement. 
 
 Un  autre avantage qu'il faut le souligner c'est la possibilité de connecter votre base de données Sqlite avec Power BI ce que va réduire le temps d'analyse 
 et ganger en productivité grâce à l'automatisation du Workflow.
-
-Python dispose lui aussi de package pour se connecter à Sqlite pour créer, manipuler et extraire en Dataframe.
-
 
 Avec Rstudio et le puissant package dplyr, on n'a pas besoin de maitriser le SQL. Le package dplyr simplifie la transformation des données mais aussi il est capable d'interagir 
 directement avec les bases de données en traduisant les verbes dplyr en requêtes SQL. suivre ce lien pour en [savoir plus](https://db.rstudio.com/getting-started/overview)
 
 
-Installer install.packages("RSQLite")
-
+Si vous ne disposez pas du package RSQlite dans votre environnement R, passer cette commande : install.packages("RSQLite")
 
 
 ```{r}
-# Load les packages
+# Load des packages
 library(dplyr)
 library(tibble)
 library(RSQLite)
 ```
 
+Load des données de nycflights
 ```{r}
 library(nycflights13)
 ```
 
-first step, c'est la création d'une base de données, nommée nycflight.sqlite
+### Créer des tables
+first step, c'est la création d'une base de données **in memory** .
+
+```{r}
+con <- dbConnect(RSQLite::SQLite(), ":memory:")
+dbListTables(con)
+```
+
+On va créer deux table dans notre base de données Sqlite et afficher la liste des tables crées
+```{r}
+dbWriteTable(con, "Flights", flights)
+dbWriteTable(con, "Airports", airports)
+
+dbListTables(con)
+```
+
+Pour avoir plus d'information sur la connexion
+```{r}
+summary(con)
+```
+
+Explorer les champs (colonnes) dans la table **Flights**
+```{r}
+dbListFields(con, "Flights")
+```
+
+On peut référencer la table **Flights** à l'aide de la fonction *tbl()*
+```{r}
+flights_db <- tbl(con, "Flights")
+airports_db <- tbl(con, "Airports")
+```
+
+Un apreçu de la table tibble 
+```{r}
+flights_db
+```
+
+### Querying les données
+Selectionner les premiers lignes
+
+Exécuter...
+un SQL statement
+```{r}
+dbGetQuery(con, "select * from Flights limit 5")
+```
+
+Meme résultat en utilisant *dbFetch()* 
+```{r}
+query <- dbSendQuery(con, 'select * from Flights')
+dbFetch(query, n = 5)
+```
+
+avec R
+```{r}
+flights_db %>% head()
+```
+
+Filtrer les données 
+
+avec SQL
+
+```{r}
+dbSendQuery(con, "SELECT * FROM Flights WHERE year = 2013")
+```
+
+Avec dplyr
+
+```{r}
+flights_db %>% filter(year==2013)
+```
+
+Il faut mentionner que c’est une requêtes à distantes, le code R est traduit en SQL et exécuté dans la base de données,  pas dans R. Quand vous travaillez avec des bases de données, Dplyr essaie d’être aussi Lazy que possible : Il ne charge jamais les données dans R sauf si vous le demandez explicitement.
+
+```{r}
+tailnum_delay_db <- flights_db %>% 
+  group_by(tailnum) %>%
+  summarise(
+    delay = mean(arr_delay),
+    n = n()
+  ) %>% 
+  arrange(desc(delay)) %>%
+  filter(n > 100)
+```
+
+Cette séquence d’opérations ne touche jamais la base de données. Ce n’est que lorsque vous demandez les données (par exemple, en exécutant  *tailnum_delay*) que dplyr génère le SQL et envoie ensuite à la base de données en une seule étape tous le code.
+
+```{r}
+tailnum_delay_db
+```
+
+dplyr traduit votre code R en SQL. Vous pouvez voir le SQL qu’il génère avec show_query() :
+
+```{r}
+tailnum_delay_db %>% show_query()
+```
+
+utiliser collect() pour extraire toutes les données dans au format tibble :
+
+```{r}
+tailnum_delay <- tailnum_delay_db %>% collect()
+```
+### Jointure
+
+```{r}
+flights_join_db<-  flights_db%>% 
+  select(year:day, dep_delay, arr_delay, dest )%>%
+  left_join(airports_db, by= c("dest" = "faa"))
+flights_join_db
+```
+
+Si on veut générer le code SQL
+
+```{r}
+flights_join_db %>% show_query()
+```
+
+C'est juste un aperçu de la manipulation des database avec Rstudio, si vous voulez en savoir plus visiter le site officiel de Rstudio:https://db.rstudio.com/getting-started/connect-to-database et sur le **lazy evaluation** : https://smithjd.github.io/sql-pet/chapter-lazy-evaluation-queries.html

@@ -1,0 +1,620 @@
+---
+title: Prévision de défaut du paiement avec Xgboost
+author: 'Mohammed Hafrate'
+date: '2022-04-10'
+categories: 
+   - Power query
+   - ODBC
+   - Sqlite
+   - Power BI
+tags: ["Sqlite", "ODBC", "Power BI"]
+
+summary: "Step by step du framework tidymodel pour prévoir les Client avec un défault de paiement par un modèle de classification 'Xgboost)"
+thumbnailImage: "/img/DAX/sqlite_bi.png"
+thumbnailImagePosition: left
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<link href="/rmarkdown-libs/datatables-css/datatables-crosstalk.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/datatables-binding/datatables.js"></script>
+<link href="/rmarkdown-libs/dt-core/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="/rmarkdown-libs/dt-core/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/dt-core/js/jquery.dataTables.min.js"></script>
+<link href="/rmarkdown-libs/crosstalk/css/crosstalk.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/crosstalk/js/crosstalk.min.js"></script>
+
+
+<p>Dans ce post, nous allons entraîner et le régler les hyperparamètres du modèle XGBoost.
+On va utiliser le package <strong>tidymodels</strong>, qui se compose de plusieurs library, un workflow pour entrainer les models de classification (ou régression) :</p>
+<ul>
+<li><strong>recipes</strong> : framework pour le Preprocessing</li>
+<li><strong>rsample</strong> : Cross Validation et sample</li>
+<li><strong>parsnip</strong> : framework de train des Machines Learnings</li>
+<li><strong>tune</strong> : Tuning des hyperparamètres</li>
+<li><strong>yardstick</strong> : evaluation sur les données Test</li>
+</ul>
+<p>Ce projet consiste à construire la meilleure fonction score possible sur une base de données classique en machine learning : la base Credit Data disponible dane le package <em>modeldata</em>.</p>
+<p>Load packages necessaires</p>
+<pre class="r"><code># Load les library
+library(tidymodels)
+library(dplyr)
+library(modeldata)
+# for EDA
+library(summarytools)
+library(skimr)
+library(DataExplorer)
+# Helper packages
+library(modeldata) # for Data score
+library(vip)
+# Parallel processing
+library(doParallel)</code></pre>
+<div id="load-les-données" class="section level2">
+<h2>Load les données</h2>
+<pre class="r"><code># set random seed for reproduction
+set.seed(123)
+data(&quot;credit_data&quot;, package = &quot;modeldata&quot;)
+credit_data %&gt;% glimpse()</code></pre>
+<pre><code>## Rows: 4,454
+## Columns: 14
+## $ Status    &lt;fct&gt; good, good, bad, good, good, good, good, good, good, bad, go~
+## $ Seniority &lt;int&gt; 9, 17, 10, 0, 0, 1, 29, 9, 0, 0, 6, 7, 8, 19, 0, 0, 15, 33, ~
+## $ Home      &lt;fct&gt; rent, rent, owner, rent, rent, owner, owner, parents, owner,~
+## $ Time      &lt;int&gt; 60, 60, 36, 60, 36, 60, 60, 12, 60, 48, 48, 36, 60, 36, 18, ~
+## $ Age       &lt;int&gt; 30, 58, 46, 24, 26, 36, 44, 27, 32, 41, 34, 29, 30, 37, 21, ~
+## $ Marital   &lt;fct&gt; married, widow, married, single, single, married, married, s~
+## $ Records   &lt;fct&gt; no, no, yes, no, no, no, no, no, no, no, no, no, no, no, yes~
+## $ Job       &lt;fct&gt; freelance, fixed, freelance, fixed, fixed, fixed, fixed, fix~
+## $ Expenses  &lt;int&gt; 73, 48, 90, 63, 46, 75, 75, 35, 90, 90, 60, 60, 75, 75, 35, ~
+## $ Income    &lt;int&gt; 129, 131, 200, 182, 107, 214, 125, 80, 107, 80, 125, 121, 19~
+## $ Assets    &lt;int&gt; 0, 0, 3000, 2500, 0, 3500, 10000, 0, 15000, 0, 4000, 3000, 5~
+## $ Debt      &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2500, 260, 0, 0, 0, 2000~
+## $ Amount    &lt;int&gt; 800, 1000, 2000, 900, 310, 650, 1600, 200, 1200, 1200, 1150,~
+## $ Price     &lt;int&gt; 846, 1658, 2985, 1325, 910, 1645, 1800, 1093, 1957, 1468, 15~</code></pre>
+</div>
+<div id="exploaration-des-données---eda-avec-skimr" class="section level1">
+<h1>Exploaration des données - EDA avec skimr</h1>
+<pre class="r"><code>skim(credit_data)</code></pre>
+<table>
+<caption><span id="tab:unnamed-chunk-3">Table 1: </span>Data summary</caption>
+<tbody>
+<tr class="odd">
+<td align="left">Name</td>
+<td align="left">credit_data</td>
+</tr>
+<tr class="even">
+<td align="left">Number of rows</td>
+<td align="left">4454</td>
+</tr>
+<tr class="odd">
+<td align="left">Number of columns</td>
+<td align="left">14</td>
+</tr>
+<tr class="even">
+<td align="left">_______________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Column type frequency:</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">factor</td>
+<td align="left">5</td>
+</tr>
+<tr class="odd">
+<td align="left">numeric</td>
+<td align="left">9</td>
+</tr>
+<tr class="even">
+<td align="left">________________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Group variables</td>
+<td align="left">None</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: factor</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="left">ordered</th>
+<th align="right">n_unique</th>
+<th align="left">top_counts</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Status</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="right">2</td>
+<td align="left">goo: 3200, bad: 1254</td>
+</tr>
+<tr class="even">
+<td align="left">Home</td>
+<td align="right">6</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="right">6</td>
+<td align="left">own: 2107, ren: 973, par: 783, oth: 319</td>
+</tr>
+<tr class="odd">
+<td align="left">Marital</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="right">5</td>
+<td align="left">mar: 3241, sin: 977, sep: 130, wid: 67</td>
+</tr>
+<tr class="even">
+<td align="left">Records</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="right">2</td>
+<td align="left">no: 3681, yes: 773</td>
+</tr>
+<tr class="odd">
+<td align="left">Job</td>
+<td align="right">2</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="right">4</td>
+<td align="left">fix: 2805, fre: 1024, par: 452, oth: 171</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: numeric</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">mean</th>
+<th align="right">sd</th>
+<th align="right">p0</th>
+<th align="right">p25</th>
+<th align="right">p50</th>
+<th align="right">p75</th>
+<th align="right">p100</th>
+<th align="left">hist</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Seniority</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">7.99</td>
+<td align="right">8.17</td>
+<td align="right">0</td>
+<td align="right">2.00</td>
+<td align="right">5</td>
+<td align="right">12.0</td>
+<td align="right">48</td>
+<td align="left">▇▃▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">Time</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">46.44</td>
+<td align="right">14.66</td>
+<td align="right">6</td>
+<td align="right">36.00</td>
+<td align="right">48</td>
+<td align="right">60.0</td>
+<td align="right">72</td>
+<td align="left">▁▂▅▃▇</td>
+</tr>
+<tr class="odd">
+<td align="left">Age</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">37.08</td>
+<td align="right">10.98</td>
+<td align="right">18</td>
+<td align="right">28.00</td>
+<td align="right">36</td>
+<td align="right">45.0</td>
+<td align="right">68</td>
+<td align="left">▆▇▆▃▁</td>
+</tr>
+<tr class="even">
+<td align="left">Expenses</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">55.57</td>
+<td align="right">19.52</td>
+<td align="right">35</td>
+<td align="right">35.00</td>
+<td align="right">51</td>
+<td align="right">72.0</td>
+<td align="right">180</td>
+<td align="left">▇▃▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">Income</td>
+<td align="right">381</td>
+<td align="right">0.91</td>
+<td align="right">141.69</td>
+<td align="right">80.75</td>
+<td align="right">6</td>
+<td align="right">90.00</td>
+<td align="right">125</td>
+<td align="right">170.0</td>
+<td align="right">959</td>
+<td align="left">▇▂▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">Assets</td>
+<td align="right">47</td>
+<td align="right">0.99</td>
+<td align="right">5403.98</td>
+<td align="right">11574.42</td>
+<td align="right">0</td>
+<td align="right">0.00</td>
+<td align="right">3000</td>
+<td align="right">6000.0</td>
+<td align="right">300000</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">Debt</td>
+<td align="right">18</td>
+<td align="right">1.00</td>
+<td align="right">343.03</td>
+<td align="right">1245.99</td>
+<td align="right">0</td>
+<td align="right">0.00</td>
+<td align="right">0</td>
+<td align="right">0.0</td>
+<td align="right">30000</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">Amount</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">1038.92</td>
+<td align="right">474.55</td>
+<td align="right">100</td>
+<td align="right">700.00</td>
+<td align="right">1000</td>
+<td align="right">1300.0</td>
+<td align="right">5000</td>
+<td align="left">▇▆▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">Price</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">1462.78</td>
+<td align="right">628.13</td>
+<td align="right">105</td>
+<td align="right">1117.25</td>
+<td align="right">1400</td>
+<td align="right">1691.5</td>
+<td align="right">11140</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="splitting-la-répartition-des-données" class="section level1">
+<h1>Splitting – la répartition des données</h1>
+<p>Maintenant, on divise les données en données de validation et de test. Les données de validation sont utilisées pour l’entrainement du modèle et l’ajustement des hyperparamètres. Une fois le modèle construit, il peut être évalué par rapport aux données test pour évaluer la qualité et la précision du nouveau modèle.</p>
+<pre class="r"><code>split &lt;- initial_split(credit_data, prop = 0.8, strata = Status)
+split</code></pre>
+<pre><code>## &lt;Analysis/Assess/Total&gt;
+## &lt;3563/891/4454&gt;</code></pre>
+<pre class="r"><code>train_data &lt;- training(split)
+test_data &lt;- testing(split)</code></pre>
+</div>
+<div id="preprocessing" class="section level1">
+<h1>Preprocessing</h1>
+<p>Le prétraitement modifie les données pour rendre notre modèle plus prédictif et le processus de formation moins intensif. De nombreux modèles nécessitent un prétraitement minutieux et exhaustif des variables pour produire des prévisions précises.
+XGBoost, cependant, est robuste contre les données fortement asymétriques et/ou corrélées. Néanmoins, nous pouvons encore bénéficier d’un certain prétraitement</p>
+<p>Dans tidymodels, nous utilisons <strong>recipes</strong> pour définir ces étapes de prétraitement.
+Le preprocessing a été déini au départ pour entrainer le modéle <strong>Catboost</strong></p>
+<pre class="r"><code>recipe_credit &lt;- train_data %&gt;%
+  recipe(Status ~ .) %&gt;%
+  step_unknown(all_nominal(), -Status) %&gt;%
+  step_medianimpute(all_numeric()) %&gt;%
+  step_other(all_nominal(), -Status, other = &quot;infrequent_combined&quot;) %&gt;%
+  step_novel(all_nominal(), -Status, new_level = &quot;unrecorded_observation&quot;) %&gt;%
+  step_dummy(all_nominal(), -Status, one_hot = TRUE) %&gt;%
+  step_mutate(
+    ratio_expense_income = Expenses / (Income + 0.001),
+    ratio_asset_income = Assets / (Income + 0.001),
+    ratio_debt_asset = Debt / (Assets + 0.001),
+    ratio_debt_income = Debt / (Income + 0.001),
+    ratio_amount_price = Amount / (Price + 0.010)
+  )
+# Add upsmpling
+#  step_upsample(Status, over_ratio = tune())
+recipe_credit</code></pre>
+<pre><code>## Data Recipe
+## 
+## Inputs:
+## 
+##       role #variables
+##    outcome          1
+##  predictor         13
+## 
+## Operations:
+## 
+## Unknown factor level assignment for all_nominal(), -Status
+## Median Imputation for all_numeric()
+## Collapsing factor levels for all_nominal(), -Status
+## Novel factor level assignment for all_nominal(), -Status
+## Dummy variables from all_nominal(), -Status
+## Variable mutation for ratio_expense_income, ratio_asset_income, ratio_debt_asset, ratio_debt_income, ratio_amount_price</code></pre>
+</div>
+<div id="splitting-pour-la-validation-croisée" class="section level1">
+<h1>Splitting pour la validation croisée</h1>
+<pre class="r"><code>cv_fold &lt;- vfold_cv(train_data, v = 5, strata = Status)
+cv_fold</code></pre>
+<pre><code>## #  5-fold cross-validation using stratification 
+## # A tibble: 5 x 2
+##   splits             id   
+##   &lt;list&gt;             &lt;chr&gt;
+## 1 &lt;split [2850/713]&gt; Fold1
+## 2 &lt;split [2850/713]&gt; Fold2
+## 3 &lt;split [2850/713]&gt; Fold3
+## 4 &lt;split [2851/712]&gt; Fold4
+## 5 &lt;split [2851/712]&gt; Fold5</code></pre>
+</div>
+<div id="specifications-du-modéle-xgboost" class="section level1">
+<h1>Specifications du modéle XGboost</h1>
+<p>On utilise le package <strong>parsnip</strong> pour définir la spécification du modèle. Parsnip permet d’accéder à plusieurs packages d’apprentissage automatique
+les 3 étapes:
+1- définir le type du modèle à entrainer
+2- Décider quel moteur (engine) de calcul à utiliser
+3- définir le mode “classification”</p>
+<pre class="r"><code>xgb_spec &lt;- boost_tree(
+  trees = tune(),
+  tree_depth = tune(), min_n = tune(),
+  loss_reduction = tune(),
+  sample_size = tune(), mtry = tune(),
+  learn_rate = tune()
+) %&gt;%
+  set_engine(&quot;xgboost&quot;) %&gt;%
+  set_mode(&quot;classification&quot;)
+xgb_spec %&gt;% translate()</code></pre>
+<pre><code>## Boosted Tree Model Specification (classification)
+## 
+## Main Arguments:
+##   mtry = tune()
+##   trees = tune()
+##   min_n = tune()
+##   tree_depth = tune()
+##   learn_rate = tune()
+##   loss_reduction = tune()
+##   sample_size = tune()
+## 
+## Computational engine: xgboost 
+## 
+## Model fit template:
+## parsnip::xgb_train(x = missing_arg(), y = missing_arg(), colsample_bytree = tune(), 
+##     nrounds = tune(), min_child_weight = tune(), max_depth = tune(), 
+##     eta = tune(), gamma = tune(), subsample = tune(), nthread = 1, 
+##     verbose = 0)</code></pre>
+<div id="grid-specification" class="section level4">
+<h4>Grid specification</h4>
+<p>On va utiliser <code>grid_latin_hypercube</code> afin que nous puissions couvrir l’espace des hyperparamètres le mieux possible</p>
+<pre class="r"><code>xgb_grid &lt;- grid_latin_hypercube(
+  trees(),
+  tree_depth(),
+  min_n(),
+  loss_reduction(),
+  sample_size = sample_prop(),
+  finalize(mtry(), train_data),
+  learn_rate(),
+  size = 50
+)
+xgb_grid</code></pre>
+<pre><code>## # A tibble: 50 x 7
+##    trees tree_depth min_n loss_reduction sample_size  mtry learn_rate
+##    &lt;int&gt;      &lt;int&gt; &lt;int&gt;          &lt;dbl&gt;       &lt;dbl&gt; &lt;int&gt;      &lt;dbl&gt;
+##  1    32          1    33   0.00122            0.128    12   7.92e- 5
+##  2  1667          6    23   0.00000428         0.754    14   4.51e- 5
+##  3  1846          9     7   0.0000000700       0.513     2   4.77e- 2
+##  4   697          7    11   0.000000112        0.651     4   5.39e- 3
+##  5   235         13    21   0.00000260         0.240     5   1.19e- 6
+##  6   785         13    19   0.0000000144       0.211    12   1.70e- 3
+##  7  1336         11    26   0.0852             0.270     9   5.46e- 8
+##  8  1185          2     2   0.0000319          0.354    12   2.47e-10
+##  9  1623          1    29   0.0000566          0.538     8   6.50e-10
+## 10   181          7    15   0.0000170          0.967    10   4.41e- 6
+## # ... with 40 more rows</code></pre>
+</div>
+</div>
+<div id="définir-workflow" class="section level1">
+<h1>Définir workflow</h1>
+<pre class="r"><code>xgb_wf &lt;- workflow() %&gt;%
+  add_recipe(recipe_credit) %&gt;%
+  add_model(xgb_spec)
+
+xgb_wf</code></pre>
+<pre><code>## == Workflow ====================================================================
+## Preprocessor: Recipe
+## Model: boost_tree()
+## 
+## -- Preprocessor ----------------------------------------------------------------
+## 6 Recipe Steps
+## 
+## * step_unknown()
+## * step_medianimpute()
+## * step_other()
+## * step_novel()
+## * step_dummy()
+## * step_mutate()
+## 
+## -- Model -----------------------------------------------------------------------
+## Boosted Tree Model Specification (classification)
+## 
+## Main Arguments:
+##   mtry = tune()
+##   trees = tune()
+##   min_n = tune()
+##   tree_depth = tune()
+##   learn_rate = tune()
+##   loss_reduction = tune()
+##   sample_size = tune()
+## 
+## Computational engine: xgboost</code></pre>
+</div>
+<div id="tune-des-hyperparamètres" class="section level1">
+<h1>Tune des hyperparamètres</h1>
+<p>Pour accélérer le calcul, on utilise paralell processing. Pour en savoir plus <a href="https://curso-r.github.io/treesnip/articles/parallel-processing.html" class="uri">https://curso-r.github.io/treesnip/articles/parallel-processing.html</a></p>
+<pre class="r"><code>all_cores &lt;- parallel::detectCores(logical = FALSE)
+registerDoParallel(cores = all_cores)
+set.seed(452)
+library(tictoc)
+cat(&quot;Nombre de cores :&quot;, all_cores)</code></pre>
+<pre><code>## Nombre de cores : 4</code></pre>
+<p>Le tuning prends un peu de temps pour évaluer l’ensemble des paramétres.</p>
+<pre class="r"><code>tic()
+xgb_tune &lt;- tune_grid(
+  xgb_wf,
+  resamples = cv_fold,
+  # metrics = metric_set(roc_auc, j_index, sens, spec),
+  control = control_grid(verbose = FALSE, save_pred = TRUE)
+)
+toc()</code></pre>
+<pre><code>## 112.37 sec elapsed</code></pre>
+<pre class="r"><code>xgb_tune</code></pre>
+<pre><code>## # Tuning results
+## # 5-fold cross-validation using stratification 
+## # A tibble: 5 x 5
+##   splits             id    .metrics           .notes           .predictions
+##   &lt;list&gt;             &lt;chr&gt; &lt;list&gt;             &lt;list&gt;           &lt;list&gt;      
+## 1 &lt;split [2850/713]&gt; Fold1 &lt;tibble [20 x 11]&gt; &lt;tibble [0 x 1]&gt; &lt;tibble&gt;    
+## 2 &lt;split [2850/713]&gt; Fold2 &lt;tibble [20 x 11]&gt; &lt;tibble [0 x 1]&gt; &lt;tibble&gt;    
+## 3 &lt;split [2850/713]&gt; Fold3 &lt;tibble [20 x 11]&gt; &lt;tibble [0 x 1]&gt; &lt;tibble&gt;    
+## 4 &lt;split [2851/712]&gt; Fold4 &lt;tibble [20 x 11]&gt; &lt;tibble [0 x 1]&gt; &lt;tibble&gt;    
+## 5 &lt;split [2851/712]&gt; Fold5 &lt;tibble [20 x 11]&gt; &lt;tibble [0 x 1]&gt; &lt;tibble&gt;</code></pre>
+</div>
+<div id="evaluer-le-résultat" class="section level1">
+<h1>Evaluer le Résultat</h1>
+<p>On va sortir les paramètres de tous ces modèles.</p>
+<pre class="r"><code>DT::datatable(xgb_tune %&gt;% collect_metrics())</code></pre>
+<div id="htmlwidget-1" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"filter":"none","data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"],[3,3,6,6,10,10,14,14,17,17,20,20,22,22,27,27,28,28,31,31],[1181,1181,883,883,287,287,1337,1337,1610,1610,41,41,507,507,1421,1421,1974,1974,740,740],[40,40,24,24,5,5,19,19,26,26,30,30,33,33,8,8,12,12,14,14],[2,2,4,4,14,14,13,13,11,11,3,3,7,7,6,6,10,10,9,9],[8.02377043073099e-05,8.02377043073099e-05,1.2435466264682e-05,1.2435466264682e-05,0.000404816798049221,0.000404816798049221,2.24300942783867e-09,2.24300942783867e-09,1.70416557080184e-08,1.70416557080184e-08,1.28066773715271e-10,1.28066773715271e-10,1.69895537835174e-07,1.69895537835174e-07,2.16892439743488e-06,2.16892439743488e-06,0.00186543087688527,0.00186543087688527,0.0219522598096763,0.0219522598096763],[0.000448893943666499,0.000448893943666499,4.80573446135499e-07,4.80573446135499e-07,5.58499676131176e-05,5.58499676131176e-05,7.29853578537967e-09,7.29853578537967e-09,0.00720916775148463,0.00720916775148463,0.459451892828406,0.459451892828406,6.72878805489228,6.72878805489228,1.79411355234453e-07,1.79411355234453e-07,0.0457608661720508,0.0457608661720508,1.97285876810347e-10,1.97285876810347e-10],[0.954286925869528,0.954286925869528,0.874900537792128,0.874900537792128,0.166154133419041,0.166154133419041,0.28297191669466,0.28297191669466,0.485309436372481,0.485309436372481,0.273012227267027,0.273012227267027,0.371744053668808,0.371744053668808,0.668872081837617,0.668872081837617,0.798497312848922,0.798497312848922,0.584601337143686,0.584601337143686],["accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc","accuracy","roc_auc"],["binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary","binary"],[0.718495989410152,0.825306023592973,0.729161873394582,0.83565573499689,0.750774934207416,0.836728267840485,0.734215689364451,0.822317441114739,0.767332603180106,0.821077833488806,0.718495989410152,0.5,0.744599098602203,0.803948300489739,0.782487747608617,0.826758764769901,0.79287352065178,0.846837088969216,0.795403186409695,0.84251710684857],[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],[0.000247044996671956,0.0040896035043811,0.00110765920901901,0.00417827294038208,0.00237346591384804,0.0042707482963975,0.00272013437732519,0.00497323477766941,0.00289002938350012,0.00552514235422377,0.000247044996671956,0,0.00367835761180872,0.00661699691530423,0.0049480729859884,0.00627830099475549,0.00298731568947198,0.00594816333625281,0.00749281838471937,0.00530647576925432],["Preprocessor1_Model01","Preprocessor1_Model01","Preprocessor1_Model02","Preprocessor1_Model02","Preprocessor1_Model03","Preprocessor1_Model03","Preprocessor1_Model04","Preprocessor1_Model04","Preprocessor1_Model05","Preprocessor1_Model05","Preprocessor1_Model06","Preprocessor1_Model06","Preprocessor1_Model07","Preprocessor1_Model07","Preprocessor1_Model08","Preprocessor1_Model08","Preprocessor1_Model09","Preprocessor1_Model09","Preprocessor1_Model10","Preprocessor1_Model10"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>mtry<\/th>\n      <th>trees<\/th>\n      <th>min_n<\/th>\n      <th>tree_depth<\/th>\n      <th>learn_rate<\/th>\n      <th>loss_reduction<\/th>\n      <th>sample_size<\/th>\n      <th>.metric<\/th>\n      <th>.estimator<\/th>\n      <th>mean<\/th>\n      <th>n<\/th>\n      <th>std_err<\/th>\n      <th>.config<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[1,2,3,4,5,6,7,10,11,12]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<p>ROC curve + gain curve</p>
+<pre class="r"><code>library(patchwork)
+
+p1 &lt;- xgb_tune %&gt;%
+  collect_predictions() %&gt;%
+  group_by(.config) %&gt;%
+  roc_curve(Status, .pred_bad) %&gt;%
+  autoplot() + theme(legend.position = &quot;none&quot;)
+
+p2 &lt;- xgb_tune %&gt;%
+  collect_predictions() %&gt;%
+  group_by(.config) %&gt;%
+  gain_curve(Status, .pred_bad) %&gt;%
+  autoplot() + theme(legend.position = &quot;none&quot;)
+
+# p1 / p2
+p1 + p2</code></pre>
+<p><img src="/post/2022-04-10-evaluer-la-performance-de-machine-learning-classification/index.en-us_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>Quels sont les combinaisons de paramètres les plus performants?
+Et, Finaliser le modèle XGBoost avec les meilleurs paramètres.</p>
+<pre class="r"><code>xgb_best &lt;- select_best(xgb_tune, &quot;roc_auc&quot;)
+xgb_final_wf &lt;- finalize_workflow(xgb_wf, xgb_best)
+xgb_best</code></pre>
+<pre><code>## # A tibble: 1 x 8
+##    mtry trees min_n tree_depth learn_rate loss_reduction sample_size .config    
+##   &lt;int&gt; &lt;int&gt; &lt;int&gt;      &lt;int&gt;      &lt;dbl&gt;          &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;      
+## 1    28  1974    12         10    0.00187         0.0458       0.798 Preprocess~</code></pre>
+<pre class="r"><code>xgb_tune %&gt;%
+  collect_metrics(parameters = xgb_best)</code></pre>
+<pre><code>## # A tibble: 20 x 13
+##     mtry trees min_n tree_depth learn_rate loss_reduction sample_size .metric 
+##    &lt;int&gt; &lt;int&gt; &lt;int&gt;      &lt;int&gt;      &lt;dbl&gt;          &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;   
+##  1     3  1181    40          2   8.02e- 5       4.49e- 4       0.954 accuracy
+##  2     3  1181    40          2   8.02e- 5       4.49e- 4       0.954 roc_auc 
+##  3     6   883    24          4   1.24e- 5       4.81e- 7       0.875 accuracy
+##  4     6   883    24          4   1.24e- 5       4.81e- 7       0.875 roc_auc 
+##  5    10   287     5         14   4.05e- 4       5.58e- 5       0.166 accuracy
+##  6    10   287     5         14   4.05e- 4       5.58e- 5       0.166 roc_auc 
+##  7    14  1337    19         13   2.24e- 9       7.30e- 9       0.283 accuracy
+##  8    14  1337    19         13   2.24e- 9       7.30e- 9       0.283 roc_auc 
+##  9    17  1610    26         11   1.70e- 8       7.21e- 3       0.485 accuracy
+## 10    17  1610    26         11   1.70e- 8       7.21e- 3       0.485 roc_auc 
+## 11    20    41    30          3   1.28e-10       4.59e- 1       0.273 accuracy
+## 12    20    41    30          3   1.28e-10       4.59e- 1       0.273 roc_auc 
+## 13    22   507    33          7   1.70e- 7       6.73e+ 0       0.372 accuracy
+## 14    22   507    33          7   1.70e- 7       6.73e+ 0       0.372 roc_auc 
+## 15    27  1421     8          6   2.17e- 6       1.79e- 7       0.669 accuracy
+## 16    27  1421     8          6   2.17e- 6       1.79e- 7       0.669 roc_auc 
+## 17    28  1974    12         10   1.87e- 3       4.58e- 2       0.798 accuracy
+## 18    28  1974    12         10   1.87e- 3       4.58e- 2       0.798 roc_auc 
+## 19    31   740    14          9   2.20e- 2       1.97e-10       0.585 accuracy
+## 20    31   740    14          9   2.20e- 2       1.97e-10       0.585 roc_auc 
+## # ... with 5 more variables: .estimator &lt;chr&gt;, mean &lt;dbl&gt;, n &lt;int&gt;,
+## #   std_err &lt;dbl&gt;, .config &lt;chr&gt;</code></pre>
+<p>What are the most important parameters for variable importance?</p>
+<pre class="r"><code>library(vip)
+
+xgb_final_wf %&gt;%
+  fit(data = train_data) %&gt;%
+  pull_workflow_fit() %&gt;%
+  vip(geom = &quot;point&quot;)</code></pre>
+<pre><code>## [22:20:18] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective &#39;binary:logistic&#39; was changed from &#39;error&#39; to &#39;logloss&#39;. Explicitly set eval_metric if you&#39;d like to restore the old behavior.</code></pre>
+<p><img src="/post/2022-04-10-evaluer-la-performance-de-machine-learning-classification/index.en-us_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p>last_fit() pour adapter notre modèle une dernière fois sur les données de validation et évaluer notre modèle sur les données de tests</p>
+<pre class="r"><code>xgb_final &lt;- xgb_final_wf %&gt;%
+  last_fit(split, metrics = metric_set(roc_auc, j_index, sens, spec, accuracy))
+xgb_final %&gt;% collect_metrics()</code></pre>
+<pre><code>## # A tibble: 5 x 4
+##   .metric  .estimator .estimate .config             
+##   &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt; &lt;chr&gt;               
+## 1 j_index  binary         0.410 Preprocessor1_Model1
+## 2 sens     binary         0.482 Preprocessor1_Model1
+## 3 spec     binary         0.928 Preprocessor1_Model1
+## 4 accuracy binary         0.802 Preprocessor1_Model1
+## 5 roc_auc  binary         0.847 Preprocessor1_Model1</code></pre>
+<p>La courbe ROC nous donnera une idée de la performance de notre modèle avec les données tests. Vous devriez savoir maintenant que si AUC (Area Under Curve) est proche de 50%, alors le modèle est aussi bon qu’un sélection aléatoire; par contre, si AUC est proche de 100%, vous avez un «modèle parfait»</p>
+<pre class="r"><code>xgb_final %&gt;%
+  collect_predictions() %&gt;%
+  roc_curve(Status, .pred_bad) %&gt;%
+  autoplot()</code></pre>
+<p><img src="/post/2022-04-10-evaluer-la-performance-de-machine-learning-classification/index.en-us_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<pre class="r"><code>xgb_final %&gt;%
+  collect_predictions() %&gt;%
+  roc_curve(Status, .pred_bad) %&gt;%
+  ggplot(aes(x = 1 - specificity, y = sensitivity)) +
+  geom_path(lwd = 1.5, alpha = 0.8, color = &quot;#421269&quot;) +
+  geom_abline(lty = 3) +
+  geom_hline(yintercept = 0.42) +
+  geom_vline(xintercept = 1 - 0.9186228) +
+  coord_equal() +
+  # scale_color_viridis_d(option = &quot;plasma&quot;, end = .6)+
+  theme_bw()</code></pre>
+<p><img src="/post/2022-04-10-evaluer-la-performance-de-machine-learning-classification/index.en-us_files/figure-html/unnamed-chunk-18-2.png" width="672" />
+Analyse de la densité pour chaque classe vs prévision, ce graphe permet de fournir des informations visuelles sur l’asymétrie, la distribution, et la qualité de prévision de notre modèle.</p>
+<pre class="r"><code>xgb_auc &lt;- xgb_final %&gt;% collect_predictions()
+h1 &lt;- xgb_auc %&gt;%
+  ggplot() +
+  geom_density(aes(x = .pred_bad, fill = Status), alpha = 0.5) +
+  theme_bw()
+h2 &lt;- xgb_auc %&gt;%
+  ggplot() +
+  geom_density(aes(x = .pred_good, fill = Status), alpha = 0.5) +
+  theme_bw()
+h1 / h2</code></pre>
+<p><img src="/post/2022-04-10-evaluer-la-performance-de-machine-learning-classification/index.en-us_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p>La performance du modèle XGboost n’est aussi pas optimale qu’attendue…Il faut revoir le process, peut-être en incrémentant d’autres données, revoir notre stratégie du tuning et du preprocessing, chnager le thresholds ou changer le modèle comme le Catboost ou LightGBM ; il y a toujours des pistes 😊</p>
+</div>
