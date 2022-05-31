@@ -19,54 +19,49 @@ thumbnailImagePosition: left
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, tidy = "styler")
 ```
 
-
-
-Le Text Mining, fouille de données, regroupe l’ensemble de techniques de Data Mining permettant le traitement des données non structurés (non structured data) que sont les textes écrites somme des fichiers de Word, Emails, pdf..
-
+Le Text Mining, fouille de données, regroupe l'ensemble de techniques de Data Mining permettant le traitement des données non structurés (non structured data) que sont les textes écrites somme des fichiers de Word, Emails, pdf..
 
 > Le text mining est utilisé pour classer des documents, réaliser des résumés de synthèse automatique ou encore pour assister la veille stratégique ou technologique selon des pistes de recherche prédéfinis.
 
-*Notre target* : utiliser la technique de fréquence pour fouiller l’ensemble de normes IFRS et extraire le mot *taux d’actualisation* pour facilter l’exploration et l’analyse  du taux par norme.
+*Notre target* : utiliser la technique de fréquence pour fouiller l'ensemble de normes IFRS et extraire le mot *taux d'actualisation* pour facilter l'exploration et l'analyse du taux par norme.
 
 ### C'est quoi le taux d'actualisation en IFRS ?
 
 La définition proposé par l'IASB :
-  
-  *Le taux d’actualisation est le taux qui est utilisé pour déterminer la valeur actualisée des flux de trésorerie. Les techniques d’actualisation servent à évaluer la juste valeur, la valeur d’utilité ou toute autre valeur actuelle d’un actif ou d’un passif, à titre de méthode d’évaluation initiale ou ultérieure.*
-  
+
+*Le taux d'actualisation est le taux qui est utilisé pour déterminer la valeur actualisée des flux de trésorerie. Les techniques d'actualisation servent à évaluer la juste valeur, la valeur d'utilité ou toute autre valeur actuelle d'un actif ou d'un passif, à titre de méthode d'évaluation initiale ou ultérieure.*
+
 Pour en savoir plus merci de consulter ce [lien](https://www.iasplus.com/fr-ca/projets/ifrs/projets-termines/discount-rates-research).
 
 La définition est très ambiguë. Aussi, vu mon expérience en consolidation IFRS depuis 2008, je vous assure qu'il n'y a pas un seul taux applicable, il y en a plusieurs, en d'autres termes, une seule définition mais avec plusieurs model de calcul.
 
-Du côté de recherche, Véronique Blum et Pierre Thérond, Dans leur rapport de recherche à l’Autorité des normes comptables (ANC), ont cherché à explorer et comprendre les différents taux utilisés et dans quelle mesure combler l’écart entre les théories et les pratiques.
+Du côté de recherche, Véronique Blum et Pierre Thérond, Dans leur rapport de recherche à l'Autorité des normes comptables (ANC), ont cherché à explorer et comprendre les différents taux utilisés et dans quelle mesure combler l'écart entre les théories et les pratiques.
 
 Un travail qui mérite de le consulter pour les intéressés et je vous encourage à faire, le [lien](https://www.anc.gouv.fr/files/live/sites/anc/files/contributed/ANC/3_Recherche/D_Etats%20generaux/2019/Policy%20papers/TR3_PP_BLUM_THEROND_2019_Francais-summary-final.pdf).
 
-Pour en arriver à ce résultat, que je trouve exceptionnel, identifier les différentes taux d’actualisation appliqués dans les normes IFRS. Les chercheurs ont récolté des données manuellement et passé au crible chaque norme... C’est lourde sachant que le manuel officiel des normes IFRS de l'EU représente de plus 1200 pages...
+Pour en arriver à ce résultat, que je trouve exceptionnel, identifier les différentes taux d'actualisation appliqués dans les normes IFRS. Les chercheurs ont récolté des données manuellement et passé au crible chaque norme... C'est lourde sachant que le manuel officiel des normes IFRS de l'EU représente de plus 1200 pages...
 
-Et si on peut automatiser ce process et de pouvoir trouver le mots *discount rate* et l’extraire de son contexte, paragraphe, et par normes...
+Et si on peut automatiser ce process et de pouvoir trouver le mots *discount rate* et l'extraire de son contexte, paragraphe, et par normes...
 
-Le post n’est pas orienté de définir les modes de calcul des différents taux utilisés en IFRS mais de montrer le potentiel des Text Mining dans différents domaines.
-
+Le post n'est pas orienté de définir les modes de calcul des différents taux utilisés en IFRS mais de montrer le potentiel des Text Mining dans différents domaines.
 
 ### Voici les étapes à suivre :
-1. Upload des fichiers pdf par normes
-2. Upload les library nécessaire
-2. Transformer les données textuelles en données exploitable
-3. Fréquence de mots par normes
-4. Extraire les paragraphes
 
+1.  Upload des fichiers pdf par normes
+2.  Upload les library nécessaire
+3.  Transformer les données textuelles en données exploitable
+4.  Fréquence de mots par normes
+5.  Extraire les paragraphes
 
 ### Step 1
-L'étape premiére consite à trouver l'ensemble des normes adoptés par l'EU dans un foramt de pdf et les télécharger pour en analyser. [le lien](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02008R1126-20210401).
-Les fichiers séparés par normes est disponible [ici](www.github.com/hafrate)
-Aprés, uploader les library de R pour la manipulation des dataframe et la extraction des données des PDF.
 
+L'étape premiére consite à trouver l'ensemble des normes adoptés par l'EU dans un foramt de pdf et les télécharger pour en analyser. [le lien](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02008R1126-20210401). Les fichiers séparés par normes est disponible [ici](https://github.com/hafrate/NomesIFRS)
+
+Aprés, uploader les library de R pour la manipulation des dataframe et la extraction des données des PDF.
 
 ### Upload des library
 
-On a besoin des library standard avec [pdfsearch](https://cran.r-project.org/web/packages/pdfsearch/vignettes/intro_to_pdfsearch.html) pour chercher dans les fichiers PDF.
-Si vous disposez pas de ces packages, vous pouvez utilisé la commande « install.packages » par exemple install.packages("purrr").
+On a besoin des library standard avec [pdfsearch](https://cran.r-project.org/web/packages/pdfsearch/vignettes/intro_to_pdfsearch.html) pour chercher dans les fichiers PDF. Si vous ne disposez pas de ces packages, vous pouvez utilisé la commande « install.packages » par exemple install.packages("purrr").
 
 ```{r}
 library(dplyr)
@@ -77,21 +72,17 @@ library(purrr)
 library(kableExtra)
 ```
 
-
 ```{r}
 wd <- "D:/Share/Blog/IFRS" # changer le dossier
 wd
 ```
-
 
 ```{r}
 file_path <- fs::dir_ls("D:/Share/Blog/IFRS/ListPDF", glob = "*.pdf")
 file_path 
 ```
 
-Pour lire l'ensemble des fichiers pdf dans notre dossier et passer la fonction *keyword_search* pour chercher le mot (keyword) « discount rate », j'utilise la fonction map de library Purrr. C’est une fonction loop mais plus performante.
-Dans le champ keyword, on peut mettre une liste de mots par exemple c(discount rate , asset, lease).
-
+Pour lire l'ensemble des fichiers pdf dans notre dossier et passer la fonction *keyword_search* pour chercher le mot (keyword) « discount rate », j'utilise la fonction map de library Purrr. C'est une fonction loop mais plus performante. Dans le champ keyword, on peut mettre une liste de mots par exemple c(discount rate , asset, lease).
 
 ```{r}
 resultat<-file_path%>%
@@ -102,7 +93,7 @@ resultat<-file_path%>%
 resultat[[1]] # représente la premiére valeur -- IAS 1
 ```
 
-Pour accéder au texte, on utilise *line_text*.  Par exemple pour la norme IAS 1
+Pour accéder au texte, on utilise *line_text*. Par exemple pour la norme IAS 1
 
 ```{r}
 resultat[[1]]$line_text
@@ -110,7 +101,6 @@ resultat[[1]]$line_text
 
 l'ancien code est correct, il permet l'itération sur l'ensemble des fichiers mais il manque le nom de la norme, pour y arriver, on créé un *tibble*
 
-  
 ```{r}
 resultat2<-tibble(Normes = basename(file_path))%>%
   mutate(content = file_path%>%map(function(path){
@@ -122,8 +112,7 @@ resultat2<-tibble(Normes = basename(file_path))%>%
 resultat2
 ```
 
-El Voilà :)
-on peut transformer ce tibble en dataframe pour explorer plus.
+El Voilà :) on peut transformer ce tibble en dataframe pour explorer plus.
 
 ```{r}
 resultat2_df<-resultat2%>%tidyr::unnest(cols=c(content))
@@ -153,8 +142,7 @@ frequence %>%
       subtitle = "Classement des normes IFRS par fréquence d'occurence du Taux d'actualisation")
 ```
 
-
-On veut accéder au paragraphe; par exemple pour la norme - IFRS 13 Faire Value 
+On veut accéder au paragraphe; par exemple pour la norme - IFRS 13 Faire Value
 
 ```{r}
 IFRS_13 <- resultat2_df%>%filter(Normes == "IFRS 13 Fair Value Measurement.pdf")
@@ -173,7 +161,7 @@ kbl(text)%>%
 
 ```
 
-Une autre maniére de formater le output grace au package htmltools, 
+Une autre maniére de formater le output grace au package htmltools,
 
 ```{r, results = "asis"}
 library(htmltools)
