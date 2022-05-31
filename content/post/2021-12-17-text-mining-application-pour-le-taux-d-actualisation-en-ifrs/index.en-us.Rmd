@@ -55,10 +55,11 @@ Le post n'est pas orienté de définir les modes de calcul des différents taux 
 
 ### Step 1
 
-L'étape premiére consite à trouver l'ensemble des normes adoptés par l'EU dans un foramt de pdf et les télécharger pour en analyser. [le lien](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02008R1126-20210401). 
+L'étape premiére consite à trouver l'ensemble des normes adoptés par l'EU dans un foramt de pdf et les télécharger pour en analyser. [le lien](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02008R1126-20210401).
+
 Les fichiers séparés par normes est disponible [ici](https://github.com/hafrate/NomesIFRS)
 
-Aprés, uploader les library de R pour la manipulation des dataframe et la extraction des données des PDF.
+Aprés, uploader les library de R pour la manipulation des dataframe et l'extraction des données des PDF.
 
 ### Upload des library
 

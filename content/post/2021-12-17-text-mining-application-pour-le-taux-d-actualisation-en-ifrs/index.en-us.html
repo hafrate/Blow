@@ -49,14 +49,13 @@ thumbnailImagePosition: left
 </div>
 <div id="step-1" class="section level3">
 <h3>Step 1</h3>
-<p>L’étape premiére consite à trouver l’ensemble des normes adoptés par l’EU dans un foramt de pdf et les télécharger pour en analyser. <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02008R1126-20210401">le lien</a>.
-Les fichiers séparés par normes est disponible <a href="www.github.com/hafrate">ici</a>
-Aprés, uploader les library de R pour la manipulation des dataframe et la extraction des données des PDF.</p>
+<p>L’étape premiére consite à trouver l’ensemble des normes adoptés par l’EU dans un foramt de pdf et les télécharger pour en analyser. <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02008R1126-20210401">le lien</a>.</p>
+<p>Les fichiers séparés par normes est disponible <a href="https://github.com/hafrate/NomesIFRS">ici</a></p>
+<p>Aprés, uploader les library de R pour la manipulation des dataframe et l’extraction des données des PDF.</p>
 </div>
 <div id="upload-des-library" class="section level3">
 <h3>Upload des library</h3>
-<p>On a besoin des library standard avec <a href="https://cran.r-project.org/web/packages/pdfsearch/vignettes/intro_to_pdfsearch.html">pdfsearch</a> pour chercher dans les fichiers PDF.
-Si vous disposez pas de ces packages, vous pouvez utilisé la commande « install.packages » par exemple install.packages(“purrr”).</p>
+<p>On a besoin des library standard avec <a href="https://cran.r-project.org/web/packages/pdfsearch/vignettes/intro_to_pdfsearch.html">pdfsearch</a> pour chercher dans les fichiers PDF. Si vous ne disposez pas de ces packages, vous pouvez utilisé la commande « install.packages » par exemple install.packages(“purrr”).</p>
 <pre class="r"><code>library(dplyr)
 library(pdfsearch)
 library(tidyverse)
@@ -108,8 +107,7 @@ file_path</code></pre>
 ## D:/Share/Blog/IFRS/ListPDF/IFRS 6 Exploration for and evaluation of mineral resources.pdf
 ## D:/Share/Blog/IFRS/ListPDF/IFRS 8 Operating segments.pdf
 ## D:/Share/Blog/IFRS/ListPDF/IFRS 9 Financial Instruments.pdf</code></pre>
-<p>Pour lire l’ensemble des fichiers pdf dans notre dossier et passer la fonction <em>keyword_search</em> pour chercher le mot (keyword) « discount rate », j’utilise la fonction map de library Purrr. C’est une fonction loop mais plus performante.
-Dans le champ keyword, on peut mettre une liste de mots par exemple c(discount rate , asset, lease).</p>
+<p>Pour lire l’ensemble des fichiers pdf dans notre dossier et passer la fonction <em>keyword_search</em> pour chercher le mot (keyword) « discount rate », j’utilise la fonction map de library Purrr. C’est une fonction loop mais plus performante. Dans le champ keyword, on peut mettre une liste de mots par exemple c(discount rate , asset, lease).</p>
 <pre class="r"><code>resultat &lt;- file_path %&gt;%
   map(function(path) {
     keyword_search(path,
@@ -151,8 +149,7 @@ resultat2</code></pre>
 ##  9 IAS 2 Inventories.pdf                                                &lt;tibble&gt;
 ## 10 IAS 20 Accounting for government grants and disclosure of governmen~ &lt;tibble&gt;
 ## # ... with 30 more rows</code></pre>
-<p>El Voilà :)
-on peut transformer ce tibble en dataframe pour explorer plus.</p>
+<p>El Voilà :) on peut transformer ce tibble en dataframe pour explorer plus.</p>
 <pre class="r"><code>resultat2_df &lt;- resultat2 %&gt;% tidyr::unnest(cols = c(content))
 resultat2_df</code></pre>
 <pre><code>## # A tibble: 108 x 6
