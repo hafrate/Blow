@@ -21,7 +21,7 @@ Si vous avez déjà mis en place la norme IFRS, vous pouvez utiliser notre méth
 
 ##### Un peu de théorie
 
-Premièrement, il convient de rappeler le processus de réflexion suivi par les entreprises au moment d'évaluer si un contrat contient un contrat de location <https://www.mnp.ca/-/media/files/mnp/pdf/_mgtn/siteassets/media/pdfs/apsg/2019/2017-02-ifrs-16-guide-final-fr-pdf.pdf>
+Premièrement, il convient de rappeler le processus de réflexion suivi par les entreprises au moment d'évaluer si un contrat contient un contrat de location.
 
 L'organigramme ci-dessous définit les étapes si un contrat est considérée comme un contrat de location selon IFRS 16
 
