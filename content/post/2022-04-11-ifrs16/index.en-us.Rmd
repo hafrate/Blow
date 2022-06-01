@@ -72,3 +72,5 @@ Pour faciliter le suivi et l'estimation de l'impact du retraitement, on synthés
 On peut facilement automatiser et générer la requête avec VBA. Magic !!!!
 
 Power query is the Best... et c'est GRATUIT.
+
+Pour télécharger le fichier Excel, le lien de [github](https://github.com/hafrate/IFRS/blob/fb042c43356e35c8c49525a1acd6218c608e9f15/IFRS16%20-Power%20Query.xlsm)
